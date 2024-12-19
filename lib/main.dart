@@ -113,18 +113,50 @@ class _HomePageState extends State<HomePage> {
             ),
             onMapCreated: _onMapCreated,
           ),
+          Positioned(
+            top: 60,
+            left: 20,
+            right: 20,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                  ),
+                ],
+              ),
+              child: const Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: "絞り込み検索",
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.search, color: Colors.grey), // Search icon
+                ],
+              ),
+            ),
+          ),
           Align(
             alignment: Alignment.bottomCenter,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  height: 100,
+                  height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: const Color(0xFFE6E0E9),
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
+                      topLeft: Radius.circular(28),
+                      topRight: Radius.circular(28),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -134,12 +166,37 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Text('Tab Area'),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: const [
+                        Text(
+                          'この付近のトイレ',
+                          style: TextStyle(
+                              fontSize: 16.0), // Customize font size if needed
+                        ),
+                        Icon(
+                          Icons.keyboard_arrow_up, // Upwards arrow icon
+                          color: Colors.grey, // Customize color if needed
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 Container(
-                  color: const Color(0xFFE6E0E9), // Background color
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE6E0E9), // Background color
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2), // Shadow color
+                        spreadRadius: 2, // Spread of the shadow
+                        blurRadius: 8, // Blur effect
+                        offset: const Offset(
+                            0, -3), // Shadow position: slightly above
+                      ),
+                    ],
+                  ),
                   child: BottomNavigationBar(
                     backgroundColor: const Color(0xFFE6E0E9),
                     type: BottomNavigationBarType.fixed,
