@@ -11,9 +11,17 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late GoogleMapController mapController;
 
+  bool _isExpanded = false;
+
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
     print("Google Map has been loaded successfully.");
+  }
+
+  void _toggleContainer() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
   }
 
   @override
@@ -65,8 +73,11 @@ class _HomePageState extends State<HomePage> {
         ),
         Align(
           alignment: Alignment.bottomCenter,
-          child: Container(
-            height: 60,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300), // アニメーションの時間
+            height: _isExpanded
+                ? MediaQuery.of(context).size.height * 0.6 // 展開時の高さ
+                : 60, // 通常時の高さ
             decoration: BoxDecoration(
               color: const Color(0xFFE6E0E9),
               borderRadius: const BorderRadius.only(
@@ -81,24 +92,55 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'この付近のトイレ',
-                    style: TextStyle(fontSize: 16.0),
-                  ),
-                  Icon(
-                    Icons.keyboard_arrow_up,
-                    color: Colors.grey,
-                  ),
+                  GestureDetector(
+                      onTap: _toggleContainer,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          top: !_isExpanded ? 0 : 16.0,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'この付近のトイレ',
+                              style: TextStyle(fontSize: 16.0),
+                            ),
+                            Icon(
+                              _isExpanded
+                                  ? Icons.keyboard_arrow_down
+                                  : Icons.keyboard_arrow_up,
+                              color: Colors.grey,
+                            ),
+                          ],
+                        ),
+                      )),
+                  if (_isExpanded)
+                    const Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Expanded content goes here!',
+                              style: TextStyle(fontSize: 14.0),
+                            ),
+                            SizedBox(height: 10),
+                            Text('Additional content can be added.'),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
           ),
-        ),
+        )
       ],
     );
   }
