@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/home_page.dart';
 import '../screens/register_toilet_page.dart';
 import '../screens/profile_page.dart';
+import '../screens/notifications_page.dart';
 
 class BottomNavLayout extends StatefulWidget {
   final int currentIndex;
@@ -16,7 +17,7 @@ class _BottomNavLayoutState extends State<BottomNavLayout> {
   final List<Widget> _pages = [
     const HomePage(),
     const RegisterToiletPage(),
-    const Placeholder(), // 後ほど追加するページ
+    const NotificationsPage(),
     const ProfilePage(),
   ];
 
