@@ -13,6 +13,23 @@ class _HomePageState extends State<HomePage> {
 
   bool _isExpanded = false;
 
+  // チェックボックスの状態
+  bool _female = false;
+  bool _male = false;
+  bool _multipurpose = false;
+  bool _washlet = false;
+  bool _ostomate = false;
+  bool _diaperChange = false;
+  bool _babyChair = false;
+  bool _wheelchair = false;
+
+  // 仮のトイレデータ
+  final List<Map<String, String>> nearbyToilets = [
+    {"name": "新宿駅 トイレ", "location": "東京都新宿区"},
+    {"name": "渋谷駅 トイレ", "location": "東京都渋谷区"},
+    {"name": "東京駅 トイレ", "location": "東京都千代田区"},
+  ];
+
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
     print("Google Map has been loaded successfully.");
@@ -120,20 +137,91 @@ class _HomePageState extends State<HomePage> {
                         ),
                       )),
                   if (_isExpanded)
-                    const Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Expanded content goes here!',
-                              style: TextStyle(fontSize: 14.0),
-                            ),
-                            SizedBox(height: 10),
-                            Text('Additional content can be added.'),
-                          ],
-                        ),
+                    Expanded(
+                      child: ListView(
+                        children: [
+                          const SizedBox(height: 16),
+                          // 一段目のチェックボックス
+                          const Text(
+                            "種類",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: _female,
+                                onChanged: (value) =>
+                                    setState(() => _female = value!),
+                              ),
+                              const Text("女性用"),
+                              Checkbox(
+                                value: _male,
+                                onChanged: (value) =>
+                                    setState(() => _male = value!),
+                              ),
+                              const Text("男性用"),
+                              Checkbox(
+                                value: _multipurpose,
+                                onChanged: (value) =>
+                                    setState(() => _multipurpose = value!),
+                              ),
+                              const Text("多目的"),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // 二段目のチェックボックス
+                          const Text(
+                            "設備",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 5,
+                            children: [
+                              FilterChip(
+                                label: const Text("ウォッシュレット"),
+                                selected: _washlet,
+                                onSelected: (value) =>
+                                    setState(() => _washlet = value),
+                              ),
+                              FilterChip(
+                                label: const Text("オストメイト"),
+                                selected: _ostomate,
+                                onSelected: (value) =>
+                                    setState(() => _ostomate = value),
+                              ),
+                              FilterChip(
+                                label: const Text("おむつ替えシート"),
+                                selected: _diaperChange,
+                                onSelected: (value) =>
+                                    setState(() => _diaperChange = value),
+                              ),
+                              FilterChip(
+                                label: const Text("ベビーチェア"),
+                                selected: _babyChair,
+                                onSelected: (value) =>
+                                    setState(() => _babyChair = value),
+                              ),
+                              FilterChip(
+                                label: const Text("車いす用手すり"),
+                                selected: _wheelchair,
+                                onSelected: (value) =>
+                                    setState(() => _wheelchair = value),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // トイレリスト
+                          const Text(
+                            "この付近のトイレ一覧",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          ...nearbyToilets.map((toilet) => ListTile(
+                                title: Text(toilet["name"]!),
+                                subtitle: Text(toilet["location"]!),
+                                leading: const Icon(Icons.location_pin),
+                              )),
+                        ],
                       ),
                     ),
                 ],
