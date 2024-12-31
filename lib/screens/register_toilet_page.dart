@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegisterToiletPage extends StatefulWidget {
   const RegisterToiletPage({super.key});
@@ -10,6 +12,10 @@ class RegisterToiletPage extends StatefulWidget {
 class _RegisterToiletPageState extends State<RegisterToiletPage> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _buildingNameController = TextEditingController();
+
+  // 現在地の緯度と経度
+  double? _latitude;
+  double? _longitude;
 
   // 種類のチェックボックス管理
   bool _female = false;
@@ -27,20 +33,78 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
   // 星の満足度管理
   int _rating = 0;
 
+  // 現在地を取得する処理
+  Future<void> _getCurrentLocation() async {
+    try {
+      // 位置情報の許可をリクエスト
+      LocationPermission permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw Exception('位置情報のアクセスが拒否されました。');
+      }
+
+      // 現在地を取得
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _locationController.text =
+            '緯度: $_latitude, 経度: $_longitude'; // TextFieldに表示
+      });
+
+      print('現在地: 緯度: $_latitude, 経度: $_longitude');
+    } catch (e) {
+      print('現在地を取得中にエラーが発生しました: $e');
+    }
+  }
+
   void _updateRating(int value) {
     setState(() {
       _rating = value;
     });
   }
 
-  void _submitForm() {
-    // 登録処理をここに実装
-    print('位置: ${_locationController.text}');
-    print('建物名: ${_buildingNameController.text}');
-    print('種類: 女性用: $_female, 男性用: $_male, 多目的: $_multipurpose, その他: $_other');
-    print('満足度: $_rating');
-    print(
-        '設備: ウォッシュレット: $_washlet, オストメイト: $_ostomate, おむつ替えシート: $_diaperChange, ベビーチェア: $_babyChair, 車いす用手すり: $_wheelchair');
+  void _submitForm() async {
+    if (_latitude == null || _longitude == null) {
+      print('位置情報が取得されていません。');
+      return;
+    }
+
+    final toiletData = {
+      'location': {
+        'latitude': _latitude,
+        'longitude': _longitude,
+      },
+      "buildingName": _buildingNameController.text,
+      "type": {
+        "female": _female,
+        "male": _male,
+        "multipurpose": _multipurpose,
+        "other": _other,
+      },
+      "rating": _rating,
+      "facilities": {
+        "washlet": _washlet,
+        "ostomate": _ostomate,
+        "diaperChange": _diaperChange,
+        "babyChair": _babyChair,
+        "wheelchair": _wheelchair,
+      },
+      "registeredBy": "userId1", // TODO: 実際のユーザーIDを取得
+      "createdAt": FieldValue.serverTimestamp(),
+    };
+
+    try {
+      await FirebaseFirestore.instance.collection('toilets').add(toiletData);
+      print('トイレ情報が登録されました！');
+    } catch (e) {
+      print('登録中にエラーが発生しました: $e');
+    }
   }
 
   @override
@@ -68,9 +132,7 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
                   ),
                   const SizedBox(height: 10),
                   ElevatedButton(
-                    onPressed: () {
-                      _locationController.text = '現在地を入力';
-                    },
+                    onPressed: _getCurrentLocation,
                     child: const Text('現在地を取得して入力'),
                   ),
                   const SizedBox(height: 20),
