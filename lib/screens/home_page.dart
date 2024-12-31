@@ -48,6 +48,7 @@ class _HomePageState extends State<HomePage> {
             title: data['buildingName'],
             snippet: '満足度: ${data['rating']}',
           ),
+          onTap: () => _showToiletDetails(data),
         );
       }).toSet();
 
@@ -57,6 +58,57 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       print('トイレ情報の取得中にエラーが発生しました: $e');
     }
+  }
+
+  // トイレ情報をダイアログで表示
+  void _showToiletDetails(Map<String, dynamic> data) {
+    print(data);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(data['buildingName']),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('満足度: ${data['rating']}'),
+              const SizedBox(height: 10),
+              Text('種類: ${_formatToiletType(data['type'])}'),
+              const SizedBox(height: 10),
+              Text('設備: ${_formatFacilities(data['facilities'])}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('閉じる'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 種類をフォーマット
+  String _formatToiletType(Map<String, dynamic> type) {
+    List<String> types = [];
+    if (type['female'] == true) types.add('女性用');
+    if (type['male'] == true) types.add('男性用');
+    if (type['multipurpose'] == true) types.add('多目的');
+    if (type['other'] == true) types.add('その他');
+    return types.join(', ');
+  }
+
+  // 設備をフォーマット
+  String _formatFacilities(Map<String, dynamic> facilities) {
+    List<String> facilityList = [];
+    if (facilities['washlet'] == true) facilityList.add('ウォッシュレット');
+    if (facilities['ostomate'] == true) facilityList.add('オストメイト');
+    if (facilities['diaperChange'] == true) facilityList.add('おむつ替えシート');
+    if (facilities['babyChair'] == true) facilityList.add('ベビーチェア');
+    if (facilities['wheelchair'] == true) facilityList.add('車いす用手すり');
+    return facilityList.join(', ');
   }
 
   // 仮のこの付近のトイレ一覧データ
