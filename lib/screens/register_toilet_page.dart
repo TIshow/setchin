@@ -76,10 +76,7 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
     }
 
     final toiletData = {
-      'location': {
-        'latitude': _latitude,
-        'longitude': _longitude,
-      },
+      'location': GeoPoint(_latitude!, _longitude!),
       "buildingName": _buildingNameController.text,
       "type": {
         "female": _female,

@@ -25,8 +25,8 @@ class NotificationsPage extends StatelessWidget {
             margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
             child: ListTile(
               leading: CircleAvatar(
-                child: Text(notification["name"]![0]), // 名前の頭文字
                 backgroundColor: const Color(0xFFE6E0E9),
+                child: Text(notification["name"]![0]),
               ),
               title: Text(notification["name"]!),
               subtitle: Text(notification["message"]!),

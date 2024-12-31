@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,6 +11,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late GoogleMapController mapController;
+  final Set<Marker> _markers = {}; // 地図上のMarkerのセット
 
   bool _isExpanded = false;
 
@@ -23,7 +25,41 @@ class _HomePageState extends State<HomePage> {
   bool _babyChair = false;
   bool _wheelchair = false;
 
-  // 仮のトイレデータ
+  @override
+  void initState() {
+    super.initState();
+    _loadToilets(); // トイレ情報を読み込む
+  }
+
+  // Firestoreからトイレ情報を取得し、Markerを作成
+  Future<void> _loadToilets() async {
+    try {
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance.collection('toilets').get();
+
+      // FirestoreのデータをMarkerに変換
+      final toilets = querySnapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        final GeoPoint location = data['location'];
+        return Marker(
+          markerId: MarkerId(doc.id),
+          position: LatLng(location.latitude, location.longitude),
+          infoWindow: InfoWindow(
+            title: data['buildingName'],
+            snippet: '満足度: ${data['rating']}',
+          ),
+        );
+      }).toSet();
+
+      setState(() {
+        _markers.addAll(toilets);
+      });
+    } catch (e) {
+      print('トイレ情報の取得中にエラーが発生しました: $e');
+    }
+  }
+
+  // 仮のこの付近のトイレ一覧データ
   final List<Map<String, String>> nearbyToilets = [
     {"name": "新宿駅 トイレ", "location": "東京都新宿区"},
     {"name": "渋谷駅 トイレ", "location": "東京都渋谷区"},
@@ -51,6 +87,7 @@ class _HomePageState extends State<HomePage> {
             zoom: 15,
           ),
           onMapCreated: _onMapCreated,
+          markers: _markers, // マーカーを地図に追加
         ),
         Positioned(
           top: 60,
