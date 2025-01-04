@@ -1,6 +1,8 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,6 +14,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late GoogleMapController mapController;
   final Set<Marker> _markers = {}; // 地図上のMarkerのセット
+  List<Map<String, dynamic>> _nearbyToilets = []; // 近くのトイレ
+  Position? _currentPosition; // 現在地
 
   bool _isExpanded = false;
 
@@ -29,40 +33,121 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadToilets(); // トイレ情報を読み込む
+    _getCurrentLocation(); // 現在地を読み込む
+  }
+
+  // 現在地を取得
+  Future<void> _getCurrentLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      setState(() {
+        _currentPosition = position;
+      });
+      _filterNearbyToilets();
+    } catch (e) {
+      print("現在地の取得中にエラー: $e");
+    }
   }
 
   // Firestoreからトイレ情報を取得し、Markerを作成
+  // 🔥[Provisional] トイレ数増えたら読み取り数が毎回えぐいことになるので、limitかけるべき。
   Future<void> _loadToilets() async {
     try {
       QuerySnapshot querySnapshot =
           await FirebaseFirestore.instance.collection('toilets').get();
 
-      // FirestoreのデータをMarkerに変換
-      final toilets = querySnapshot.docs.map((doc) {
+      final List<Map<String, dynamic>> toilets = [];
+      final Set<Marker> markers = {};
+
+      for (var doc in querySnapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         final GeoPoint location = data['location'];
-        return Marker(
+
+        // トイレデータの構造を統一してリストに追加
+        final toiletData = {
+          "id": doc.id,
+          "name": data['buildingName'],
+          "location": location,
+          "rating": data['rating'],
+          "type": data['type'],
+          "facilities": data['facilities'],
+        };
+
+        toilets.add(toiletData);
+
+        // Marker の作成
+        markers.add(Marker(
           markerId: MarkerId(doc.id),
           position: LatLng(location.latitude, location.longitude),
           infoWindow: InfoWindow(
             title: data['buildingName'],
             snippet: '満足度: ${data['rating']}',
           ),
-          onTap: () => _showToiletDetails(data),
-        );
-      }).toSet();
+          onTap: () {
+            _showToiletDetails(data);
+          },
+        ));
+      }
 
       setState(() {
-        _markers.addAll(toilets);
+        _markers.addAll(markers);
+        _nearbyToilets = toilets; // 近くのトイレリスト用に設定
       });
     } catch (e) {
       print('トイレ情報の取得中にエラーが発生しました: $e');
     }
   }
 
+  // 現在地から一定距離内のトイレをフィルタリング
+  void _filterNearbyToilets([List<Map<String, dynamic>>? toilets]) {
+    if (_currentPosition == null) return;
+
+    final userLat = _currentPosition!.latitude;
+    final userLng = _currentPosition!.longitude;
+    const double maxDistance = 10000.0;
+
+    final nearbyToilets = (toilets ?? []).where((toilet) {
+      final GeoPoint location = toilet['location'] as GeoPoint;
+      final double distance = _calculateDistance(
+        userLat,
+        userLng,
+        location.latitude,
+        location.longitude,
+      );
+      return distance <= maxDistance;
+    }).toList();
+
+    setState(() {
+      _nearbyToilets = nearbyToilets;
+    });
+  }
+
+  // 距離計算（Haversine formula）
+  double _calculateDistance(
+      double lat1, double lng1, double lat2, double lng2) {
+    const double earthRadius = 6371.0; // 地球の半径 (km)
+    final double dLat = _degreesToRadians(lat2 - lat1);
+    final double dLng = _degreesToRadians(lng2 - lng1);
+
+    final double a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(_degreesToRadians(lat1)) *
+            cos(_degreesToRadians(lat2)) *
+            sin(dLng / 2) *
+            sin(dLng / 2);
+    final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return earthRadius * c;
+  }
+
+  double _degreesToRadians(double degrees) {
+    return degrees * pi / 180;
+  }
+
   // トイレ情報をダイアログで表示
   void _showToiletDetails(Map<String, dynamic> data) {
-    print(data);
     showDialog(
       context: context,
       builder: (context) {
@@ -110,13 +195,6 @@ class _HomePageState extends State<HomePage> {
     if (facilities['wheelchair'] == true) facilityList.add('車いす用手すり');
     return facilityList.join(', ');
   }
-
-  // 仮のこの付近のトイレ一覧データ
-  final List<Map<String, String>> nearbyToilets = [
-    {"name": "新宿駅 トイレ", "location": "東京都新宿区"},
-    {"name": "渋谷駅 トイレ", "location": "東京都渋谷区"},
-    {"name": "東京駅 トイレ", "location": "東京都千代田区"},
-  ];
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -305,9 +383,8 @@ class _HomePageState extends State<HomePage> {
                             "この付近のトイレ一覧",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          ...nearbyToilets.map((toilet) => ListTile(
+                          ..._nearbyToilets.map((toilet) => ListTile(
                                 title: Text(toilet["name"]!),
-                                subtitle: Text(toilet["location"]!),
                                 leading: const Icon(Icons.location_pin),
                               )),
                         ],
