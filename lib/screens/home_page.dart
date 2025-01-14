@@ -19,6 +19,9 @@ class _HomePageState extends State<HomePage> {
 
   bool _isExpanded = false;
 
+  // PageView のコントローラー。この付近のトイレで選択されたトイレの表示用
+  final PageController _pageController = PageController();
+
   // チェックボックスの状態
   bool _female = false;
   bool _male = false;
@@ -65,16 +68,26 @@ class _HomePageState extends State<HomePage> {
 
       for (var doc in querySnapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-        final GeoPoint location = data['location'];
+        final GeoPoint? location = data['location'] as GeoPoint?;
+        final String name = data['buildingName'] ?? '名前未設定';
+        final int rating = data['rating'] ?? 0;
+        final Map<String, dynamic> type = data['type'] ?? {};
+        final Map<String, dynamic> facilities = data['facilities'] ?? {};
+
+        // locationがnullの場合はスキップ
+        if (location == null) {
+          print('Warning: トイレデータに位置情報がありません。ドキュメントID: ${doc.id}');
+          continue;
+        }
 
         // トイレデータの構造を統一してリストに追加
         final toiletData = {
           "id": doc.id,
-          "name": data['buildingName'],
+          "name": name,
           "location": location,
-          "rating": data['rating'],
-          "type": data['type'],
-          "facilities": data['facilities'],
+          "rating": rating,
+          "type": type,
+          "facilities": facilities,
         };
 
         toilets.add(toiletData);
@@ -148,20 +161,26 @@ class _HomePageState extends State<HomePage> {
 
   // トイレ情報をダイアログで表示
   void _showToiletDetails(Map<String, dynamic> data) {
+    final String name = data['name'] ?? '名前未設定';
+    final String rating = data['rating']?.toString() ?? '情報なし';
+    final GeoPoint? location = data['location'] as GeoPoint?;
+    final Map<String, dynamic> type = data['type'] ?? {};
+    final Map<String, dynamic> facilities = data['facilities'] ?? {};
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(data['buildingName']),
+          title: Text(name),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('満足度: ${data['rating']}'),
+              Text('満足度: $rating'),
               const SizedBox(height: 10),
-              Text('種類: ${_formatToiletType(data['type'])}'),
+              Text('種類: ${_formatToiletType(type)}'),
               const SizedBox(height: 10),
-              Text('設備: ${_formatFacilities(data['facilities'])}'),
+              Text('設備: ${_formatFacilities(facilities)}'),
             ],
           ),
           actions: [
@@ -386,6 +405,10 @@ class _HomePageState extends State<HomePage> {
                           ..._nearbyToilets.map((toilet) => ListTile(
                                 title: Text(toilet["name"]!),
                                 leading: const Icon(Icons.location_pin),
+                                onTap: () {
+                                  print(toilet); // ここでデバッグログを確認
+                                  _showToiletDetails(toilet);
+                                },
                               )),
                         ],
                       ),
