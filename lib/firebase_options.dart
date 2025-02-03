@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;  // ここでWebの設定を返す
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -59,6 +56,16 @@ class DefaultFirebaseOptions {
     projectId: 'setchin-d750a',
     storageBucket: 'setchin-d750a.firebasestorage.app',
     iosBundleId: 'com.example.setchin',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: "AIzaSyC_-dCLczNbwgYDnus7ViQ2_Ps3MCETJWI",
+    authDomain: "setchin-d750a.firebaseapp.com",
+    projectId: "setchin-d750a",
+    storageBucket: "setchin-d750a.firebasestorage.app",
+    messagingSenderId: "1052657362861",
+    appId: "1:1052657362861:web:b16e3edce179934a6ee324",
+    measurementId: "G-F1VF5GVDMJ"
   );
 
 }
