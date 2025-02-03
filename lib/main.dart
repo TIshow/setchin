@@ -11,11 +11,16 @@ import 'dart:html' as html;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // 1. まず環境変数を読み込む
+  await dotenv.load(fileName: ".env");
+
+  // 2. 環境変数がロードされた後にFirebaseを初期化
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await dotenv.load(fileName: ".env");
 
+  // 3. Webプラットフォームの場合にGoogle Mapsスクリプトを追加
   if (kIsWeb) {
     addGoogleMapsScript(dotenv.env['GOOGLE_MAPS_API_KEY']!);
   }
