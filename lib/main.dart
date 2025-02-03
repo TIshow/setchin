@@ -3,39 +3,35 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'widgets/bottom_nav_layout.dart';
-import 'package:flutter/foundation.dart' show kIsWeb; // プラットフォーム判定用
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-// Web専用のdart:htmlを条件付きインポート
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+// 条件付きインポート
+import 'utils/web_utils.dart'
+  if (dart.library.html) 'utils/web_utils.dart'
+  if (dart.library.io) 'utils/stub_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 1. まず環境変数を読み込む
+  // 環境変数を読み込む
   await dotenv.load(fileName: ".env");
 
-  // 2. 環境変数がロードされた後にFirebaseを初期化
+  // Firebaseの初期化
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 3. Webプラットフォームの場合にGoogle Mapsスクリプトを追加
+  // Webの場合のみGoogle Mapsスクリプトを追加
   if (kIsWeb) {
-    addGoogleMapsScript(dotenv.env['GOOGLE_MAPS_API_KEY']!);
+    final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
+    if (apiKey != null && apiKey.isNotEmpty) {
+      addGoogleMapsScript(apiKey);
+    } else {
+      print('Error: GOOGLE_MAPS_API_KEY is not set in the .env file.');
+    }
   }
 
   runApp(const MyApp());
-}
-
-// Webの場合のみGoogle Mapsのスクリプトを追加
-void addGoogleMapsScript(String apiKey) {
-  final script = html.ScriptElement()
-    ..src = 'https://maps.googleapis.com/maps/api/js?key=$apiKey&callback=initMap'
-    ..type = 'text/javascript'
-    ..async = true
-    ..defer = true;
-  html.document.body!.append(script);
 }
 
 class MyApp extends StatelessWidget {
