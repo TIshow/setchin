@@ -99,10 +99,63 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
     try {
       await FirebaseFirestore.instance.collection('toilets').add(toiletData);
       print('トイレ情報が登録されました！');
+      // フォームの内容をクリアする
+      _clearForm();
+
+      // 完了メッセージを表示
+      _showSuccessDialog();
     } catch (e) {
       print('登録中にエラーが発生しました: $e');
     }
   }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 60),
+              SizedBox(height: 10),
+              Text(
+                '登録が完了しました！',
+                style: TextStyle(fontSize: 16.0),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // フォームをクリアする
+
+void _clearForm() {
+  setState(() {
+    _locationController.clear();
+    _buildingNameController.clear();
+    _latitude = null;
+    _longitude = null;
+    _rating = 0;
+    _female = false;
+    _male = false;
+    _multipurpose = false;
+    _other = false;
+    _washlet = false;
+    _ostomate = false;
+    _diaperChange = false;
+    _babyChair = false;
+    _wheelchair = false;
+  });
+}
 
   @override
   Widget build(BuildContext context) {
