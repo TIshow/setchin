@@ -60,6 +60,25 @@ class _HomePageState extends State<HomePage> {
   // 🔥[Provisional] トイレ数増えたら読み取り数が毎回えぐいことになるので、limitかけるべき。
   Future<void> _loadToilets() async {
     try {
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      setState(() {
+        _currentPosition = position;
+      });
+
+      // 現在地を中心にカメラを移動
+      mapController.animateCamera(
+        CameraUpdate.newLatLng(
+          LatLng(position.latitude, position.longitude),
+        ),
+      );
+
+      _filterNearbyToilets();
+
       QuerySnapshot querySnapshot =
           await FirebaseFirestore.instance.collection('toilets').get();
 
@@ -226,6 +245,22 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  double _currentZoomLevel = 15;
+
+void _zoomIn() {
+  _currentZoomLevel++;
+  mapController.animateCamera(
+    CameraUpdate.zoomTo(_currentZoomLevel),
+  );
+}
+
+void _zoomOut() {
+  _currentZoomLevel--;
+  mapController.animateCamera(
+    CameraUpdate.zoomTo(_currentZoomLevel),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -237,6 +272,30 @@ class _HomePageState extends State<HomePage> {
           ),
           onMapCreated: _onMapCreated,
           markers: _markers, // マーカーを地図に追加
+          zoomControlsEnabled: false, // デフォルトのズームボタンを非表示にする
+        ),
+        // ズームボタンの位置
+        Positioned(
+          top: 120,
+          left: 16,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FloatingActionButton(
+                heroTag: "zoom_in",
+                mini: true,
+                onPressed: _zoomIn,
+                child: const Icon(Icons.add),
+              ),
+              const SizedBox(height: 8),
+              FloatingActionButton(
+                heroTag: "zoom_out",
+                mini: true,
+                onPressed: _zoomOut,
+                child: const Icon(Icons.remove),
+              ),
+            ],
+          ),
         ),
         Positioned(
           top: 60,
