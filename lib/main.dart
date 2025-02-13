@@ -7,19 +7,20 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 // 条件付きインポート
 import 'utils/web_utils.dart'
-  if (dart.library.html) 'utils/web_utils.dart'
-  if (dart.library.io) 'utils/stub_utils.dart';
+    if (dart.library.html) 'utils/web_utils.dart'
+    if (dart.library.io) 'utils/stub_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // 環境変数を読み込む
-  await dotenv.load(fileName: ".env");
 
   // Firebaseの初期化
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print("🔥 Firebase 初期化エラー: $e");
+  }
 
   // Webの場合のみGoogle Mapsスクリプトを追加
   if (kIsWeb) {
