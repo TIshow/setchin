@@ -290,13 +290,26 @@ Future<void> _moveToCurrentLocation() async {
         ),
         // カスタム現在地ボタン
         Positioned(
-          bottom: 80,
+          bottom: 90,
           right: 16,
           child: FloatingActionButton(
             heroTag: "current_location",
-            mini: true,
             onPressed: _moveToCurrentLocation,
             child: const Icon(Icons.my_location),
+          ),
+        ),
+        // 再読み込みボタン
+        Positioned(
+          bottom: 160,
+          right: 16,
+          child: FloatingActionButton(
+            heroTag: "reload",
+            onPressed: () async {
+              debugPrint("再読み込み中...");
+              await _loadToilets();  // 再読み込み処理
+              debugPrint("再読み込み完了！");
+            },
+            child: const Icon(Icons.refresh),
           ),
         ),
         // ズームボタンの位置
