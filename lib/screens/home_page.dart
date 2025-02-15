@@ -52,7 +52,7 @@ class _HomePageState extends State<HomePage> {
       });
       _filterNearbyToilets();
     } catch (e) {
-      print("現在地の取得中にエラー: $e");
+      debugPrint("現在地の取得中にエラー: $e");
     }
   }
 
@@ -60,6 +60,25 @@ class _HomePageState extends State<HomePage> {
   // 🔥[Provisional] トイレ数増えたら読み取り数が毎回えぐいことになるので、limitかけるべき。
   Future<void> _loadToilets() async {
     try {
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      setState(() {
+        _currentPosition = position;
+      });
+
+      // 現在地を中心にカメラを移動
+      mapController.animateCamera(
+        CameraUpdate.newLatLng(
+          LatLng(position.latitude, position.longitude),
+        ),
+      );
+
+      _filterNearbyToilets();
+
       QuerySnapshot querySnapshot =
           await FirebaseFirestore.instance.collection('toilets').get();
 
@@ -76,7 +95,7 @@ class _HomePageState extends State<HomePage> {
 
         // locationがnullの場合はスキップ
         if (location == null) {
-          print('Warning: トイレデータに位置情報がありません。ドキュメントID: ${doc.id}');
+          debugPrint('Warning: トイレデータに位置情報がありません。ドキュメントID: ${doc.id}');
           continue;
         }
 
@@ -111,7 +130,7 @@ class _HomePageState extends State<HomePage> {
         _nearbyToilets = toilets; // 近くのトイレリスト用に設定
       });
     } catch (e) {
-      print('トイレ情報の取得中にエラーが発生しました: $e');
+      debugPrint('トイレ情報の取得中にエラーが発生しました: $e');
     }
   }
 
@@ -217,7 +236,8 @@ class _HomePageState extends State<HomePage> {
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
-    print("Google Map has been loaded successfully.");
+    _moveToCurrentLocation();  // マップ生成後に現在地に移動
+    debugPrint("Google Map has been loaded successfully.");
   }
 
   void _toggleContainer() {
@@ -225,6 +245,35 @@ class _HomePageState extends State<HomePage> {
       _isExpanded = !_isExpanded;
     });
   }
+
+  double _currentZoomLevel = 15;
+
+void _zoomIn() {
+  _currentZoomLevel++;
+  mapController.animateCamera(
+    CameraUpdate.zoomTo(_currentZoomLevel),
+  );
+}
+
+void _zoomOut() {
+  _currentZoomLevel--;
+  mapController.animateCamera(
+    CameraUpdate.zoomTo(_currentZoomLevel),
+  );
+}
+
+Future<void> _moveToCurrentLocation() async {
+  if (_currentPosition == null) {
+    print('現在地が取得できませんでした。');
+    return;
+  }
+
+  mapController.animateCamera(
+    CameraUpdate.newLatLng(
+      LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -237,6 +286,54 @@ class _HomePageState extends State<HomePage> {
           ),
           onMapCreated: _onMapCreated,
           markers: _markers, // マーカーを地図に追加
+          zoomControlsEnabled: false, // デフォルトのズームボタンを非表示にする
+        ),
+        // カスタム現在地ボタン
+        Positioned(
+          bottom: 90,
+          right: 16,
+          child: FloatingActionButton(
+            heroTag: "current_location",
+            onPressed: _moveToCurrentLocation,
+            child: const Icon(Icons.my_location),
+          ),
+        ),
+        // 再読み込みボタン
+        Positioned(
+          bottom: 160,
+          right: 16,
+          child: FloatingActionButton(
+            heroTag: "reload",
+            onPressed: () async {
+              debugPrint("再読み込み中...");
+              await _loadToilets();  // 再読み込み処理
+              debugPrint("再読み込み完了！");
+            },
+            child: const Icon(Icons.refresh),
+          ),
+        ),
+        // ズームボタンの位置
+        Positioned(
+          top: 120,
+          left: 16,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FloatingActionButton(
+                heroTag: "zoom_in",
+                mini: true,
+                onPressed: _zoomIn,
+                child: const Icon(Icons.add),
+              ),
+              const SizedBox(height: 8),
+              FloatingActionButton(
+                heroTag: "zoom_out",
+                mini: true,
+                onPressed: _zoomOut,
+                child: const Icon(Icons.remove),
+              ),
+            ],
+          ),
         ),
         Positioned(
           top: 60,
