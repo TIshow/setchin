@@ -236,7 +236,8 @@ class _HomePageState extends State<HomePage> {
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
-    print("Google Map has been loaded successfully.");
+    _moveToCurrentLocation();  // マップ生成後に現在地に移動
+    debugPrint("Google Map has been loaded successfully.");
   }
 
   void _toggleContainer() {
