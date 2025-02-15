@@ -52,7 +52,7 @@ class _HomePageState extends State<HomePage> {
       });
       _filterNearbyToilets();
     } catch (e) {
-      print("現在地の取得中にエラー: $e");
+      debugPrint("現在地の取得中にエラー: $e");
     }
   }
 
@@ -95,7 +95,7 @@ class _HomePageState extends State<HomePage> {
 
         // locationがnullの場合はスキップ
         if (location == null) {
-          print('Warning: トイレデータに位置情報がありません。ドキュメントID: ${doc.id}');
+          debugPrint('Warning: トイレデータに位置情報がありません。ドキュメントID: ${doc.id}');
           continue;
         }
 
@@ -130,7 +130,7 @@ class _HomePageState extends State<HomePage> {
         _nearbyToilets = toilets; // 近くのトイレリスト用に設定
       });
     } catch (e) {
-      print('トイレ情報の取得中にエラーが発生しました: $e');
+      debugPrint('トイレ情報の取得中にエラーが発生しました: $e');
     }
   }
 
@@ -261,6 +261,19 @@ void _zoomOut() {
   );
 }
 
+Future<void> _moveToCurrentLocation() async {
+  if (_currentPosition == null) {
+    print('現在地が取得できませんでした。');
+    return;
+  }
+
+  mapController.animateCamera(
+    CameraUpdate.newLatLng(
+      LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+    ),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -273,6 +286,17 @@ void _zoomOut() {
           onMapCreated: _onMapCreated,
           markers: _markers, // マーカーを地図に追加
           zoomControlsEnabled: false, // デフォルトのズームボタンを非表示にする
+        ),
+        // カスタム現在地ボタン
+        Positioned(
+          bottom: 80,
+          right: 16,
+          child: FloatingActionButton(
+            heroTag: "current_location",
+            mini: true,
+            onPressed: _moveToCurrentLocation,
+            child: const Icon(Icons.my_location),
+          ),
         ),
         // ズームボタンの位置
         Positioned(
