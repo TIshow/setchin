@@ -12,6 +12,7 @@ import 'utils/web_utils.dart'
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
 
   // Firebaseの初期化
   try {
