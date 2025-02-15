@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1052657362861",
+    "project_id": "setchin-d750a",
+    "storage_bucket": "setchin-d750a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1052657362861:android:2fe2ce9513dcf3fc6ee324",
+        "android_client_info": {
+          "package_name": "com.example.setchin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCi5gxQwvkYpt4iyGbu5nZ6CGmQomw52KY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

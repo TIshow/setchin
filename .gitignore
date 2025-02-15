@@ -6,13 +6,16 @@
 *.env
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
 
 # iOS
 ios/Runner/Env.swift
+ios/Env.swift
 
 # IntelliJ related
 *.iml
