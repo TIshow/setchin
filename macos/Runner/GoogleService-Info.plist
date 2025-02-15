@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.coiai.setchin</string>
+	<string>com.example.setchin</string>
 	<key>PROJECT_ID</key>
 	<string>setchin-d750a</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1052657362861:ios:dbc4e0fc08f89ca76ee324</string>
+	<string>1:1052657362861:ios:397c714b3312e7cf6ee324</string>
 </dict>
 </plist>
