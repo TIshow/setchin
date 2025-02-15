@@ -15,6 +15,7 @@ migrate_working_dir/
 
 # iOS
 ios/Runner/Env.swift
+ios/Env.swift
 
 # IntelliJ related
 *.iml
