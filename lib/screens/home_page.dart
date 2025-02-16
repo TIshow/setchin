@@ -6,6 +6,8 @@ import 'package:geolocator/geolocator.dart';
 
 // my packages
 import '../components/templates/swipe_up_menu.dart';
+import '../components/templates/floating_buttons.dart';
+import '../components/templates/map_view.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -282,61 +284,24 @@ Future<void> _moveToCurrentLocation() async {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        GoogleMap(
-          initialCameraPosition: const CameraPosition(
-            target: LatLng(35.6895, 139.6917), // Tokyo coordinates
-            zoom: 15,
-          ),
-          onMapCreated: _onMapCreated,
-          markers: _markers, // マーカーを地図に追加
-          zoomControlsEnabled: false, // デフォルトのズームボタンを非表示にする
+        MapView(
+          markers: _markers,
+          onMapCreated: (controller) {
+            mapController = controller;
+            _moveToCurrentLocation();
+          },
         ),
-        // カスタム現在地ボタン
-        Positioned(
-          bottom: 90,
-          right: 16,
-          child: FloatingActionButton(
-            heroTag: "current_location",
-            onPressed: _moveToCurrentLocation,
-            child: const Icon(Icons.my_location),
-          ),
-        ),
-        // 再読み込みボタン
-        Positioned(
-          bottom: 160,
-          right: 16,
-          child: FloatingActionButton(
-            heroTag: "reload",
-            onPressed: () async {
-              debugPrint("再読み込み中...");
-              await _loadToilets();  // 再読み込み処理
-              debugPrint("再読み込み完了！");
-            },
-            child: const Icon(Icons.refresh),
-          ),
-        ),
-        // ズームボタンの位置
-        Positioned(
-          top: 120,
-          left: 16,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              FloatingActionButton(
-                heroTag: "zoom_in",
-                mini: true,
-                onPressed: _zoomIn,
-                child: const Icon(Icons.add),
-              ),
-              const SizedBox(height: 8),
-              FloatingActionButton(
-                heroTag: "zoom_out",
-                mini: true,
-                onPressed: _zoomOut,
-                child: const Icon(Icons.remove),
-              ),
-            ],
-          ),
+        FloatingButtons(
+          onCurrentLocationPressed: _moveToCurrentLocation,
+          onReloadPressed: _loadToilets,
+          onZoomInPressed: () {
+            _currentZoomLevel++;
+            mapController.animateCamera(CameraUpdate.zoomTo(_currentZoomLevel));
+          },
+          onZoomOutPressed: () {
+            _currentZoomLevel--;
+            mapController.animateCamera(CameraUpdate.zoomTo(_currentZoomLevel));
+          },
         ),
         Positioned(
           top: 60,
