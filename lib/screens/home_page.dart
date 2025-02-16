@@ -4,6 +4,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 
+// my packages
+import '../components/templates/swipe_up_menu.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -23,14 +26,14 @@ class _HomePageState extends State<HomePage> {
   final PageController _pageController = PageController();
 
   // チェックボックスの状態
-  bool _female = false;
-  bool _male = false;
-  bool _multipurpose = false;
-  bool _washlet = false;
-  bool _ostomate = false;
-  bool _diaperChange = false;
-  bool _babyChair = false;
-  bool _wheelchair = false;
+  final bool _female = false;
+  final bool _male = false;
+  final bool _multipurpose = false;
+  final bool _washlet = false;
+  final bool _ostomate = false;
+  final bool _diaperChange = false;
+  final bool _babyChair = false;
+  final bool _wheelchair = false;
 
   @override
   void initState() {
@@ -392,126 +395,24 @@ Future<void> _moveToCurrentLocation() async {
                 ),
               ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                      onTap: _toggleContainer,
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                          top: !_isExpanded ? 0 : 16.0,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'この付近のトイレ',
-                              style: TextStyle(fontSize: 16.0),
-                            ),
-                            Icon(
-                              _isExpanded
-                                  ? Icons.keyboard_arrow_down
-                                  : Icons.keyboard_arrow_up,
-                              color: Colors.grey,
-                            ),
-                          ],
-                        ),
-                      )),
-                  if (_isExpanded)
-                    Expanded(
-                      child: ListView(
-                        children: [
-                          const SizedBox(height: 16),
-                          // 一段目のチェックボックス
-                          const Text(
-                            "種類",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Row(
-                            children: [
-                              Checkbox(
-                                value: _female,
-                                onChanged: (value) =>
-                                    setState(() => _female = value!),
-                              ),
-                              const Text("女性用"),
-                              Checkbox(
-                                value: _male,
-                                onChanged: (value) =>
-                                    setState(() => _male = value!),
-                              ),
-                              const Text("男性用"),
-                              Checkbox(
-                                value: _multipurpose,
-                                onChanged: (value) =>
-                                    setState(() => _multipurpose = value!),
-                              ),
-                              const Text("多目的"),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          // 二段目のチェックボックス
-                          const Text(
-                            "設備",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 5,
-                            children: [
-                              FilterChip(
-                                label: const Text("ウォッシュレット"),
-                                selected: _washlet,
-                                onSelected: (value) =>
-                                    setState(() => _washlet = value),
-                              ),
-                              FilterChip(
-                                label: const Text("オストメイト"),
-                                selected: _ostomate,
-                                onSelected: (value) =>
-                                    setState(() => _ostomate = value),
-                              ),
-                              FilterChip(
-                                label: const Text("おむつ替えシート"),
-                                selected: _diaperChange,
-                                onSelected: (value) =>
-                                    setState(() => _diaperChange = value),
-                              ),
-                              FilterChip(
-                                label: const Text("ベビーチェア"),
-                                selected: _babyChair,
-                                onSelected: (value) =>
-                                    setState(() => _babyChair = value),
-                              ),
-                              FilterChip(
-                                label: const Text("車いす用手すり"),
-                                selected: _wheelchair,
-                                onSelected: (value) =>
-                                    setState(() => _wheelchair = value),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          // トイレリスト
-                          const Text(
-                            "この付近のトイレ一覧",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          ..._nearbyToilets.map((toilet) => ListTile(
-                                title: Text(toilet["name"]!),
-                                leading: const Icon(Icons.location_pin),
-                                onTap: () {
-                                  print(toilet); // ここでデバッグログを確認
-                                  _showToiletDetails(toilet);
-                                },
-                              )),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
+            child: SwipeUpMenu(
+              isExpanded: _isExpanded,
+              toggleMenu: _toggleContainer,
+              nearbyToilets: _nearbyToilets,
+              showToiletDetails: _showToiletDetails,
+              female: _female,
+              male: _male,
+              multipurpose: _multipurpose,
+              washlet: _washlet,
+              ostomate: _ostomate,
+              diaperChange: _diaperChange,
+              babyChair: _babyChair,
+              wheelchair: _wheelchair,
+              onFilterChange: (bool value) {
+                setState(() {
+                  // フィルターの状態を更新する
+                });
+              },
             ),
           ),
         )
