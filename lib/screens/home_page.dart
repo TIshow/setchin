@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import '../components/templates/swipe_up_menu.dart';
 import '../components/templates/floating_buttons.dart';
 import '../components/templates/map_view.dart';
+import '../components/organisms/search_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -239,12 +240,6 @@ class _HomePageState extends State<HomePage> {
     return facilityList.join(', ');
   }
 
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
-    _moveToCurrentLocation();  // マップ生成後に現在地に移動
-    debugPrint("Google Map has been loaded successfully.");
-  }
-
   void _toggleContainer() {
     setState(() {
       _isExpanded = !_isExpanded;
@@ -252,20 +247,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   double _currentZoomLevel = 15;
-
-void _zoomIn() {
-  _currentZoomLevel++;
-  mapController.animateCamera(
-    CameraUpdate.zoomTo(_currentZoomLevel),
-  );
-}
-
-void _zoomOut() {
-  _currentZoomLevel--;
-  mapController.animateCamera(
-    CameraUpdate.zoomTo(_currentZoomLevel),
-  );
-}
 
 Future<void> _moveToCurrentLocation() async {
   if (_currentPosition == null) {
@@ -284,6 +265,7 @@ Future<void> _moveToCurrentLocation() async {
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        // 地図
         MapView(
           markers: _markers,
           onMapCreated: (controller) {
@@ -291,6 +273,7 @@ Future<void> _moveToCurrentLocation() async {
             _moveToCurrentLocation();
           },
         ),
+        // フローティングボタン
         FloatingButtons(
           onCurrentLocationPressed: _moveToCurrentLocation,
           onReloadPressed: _loadToilets,
@@ -303,42 +286,18 @@ Future<void> _moveToCurrentLocation() async {
             mapController.animateCamera(CameraUpdate.zoomTo(_currentZoomLevel));
           },
         ),
+        // 検索バー
         Positioned(
-          top: 60,
-          left: 20,
-          right: 20,
-          child: Material(
-            elevation: 2,
-            borderRadius: BorderRadius.circular(30),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                  ),
-                ],
-              ),
-              child: const Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: "絞り込み検索",
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  Icon(Icons.search, color: Colors.grey),
-                ],
-              ),
-            ),
-          ),
+        top: 60,
+        left: 20,
+        right: 20,
+        child: CustomSearchBar(
+          onSearchChanged: (text) {
+            debugPrint("検索キーワード: $text");
+            // 検索キーワードを使った処理を追加可能
+          },
         ),
+      ),
         Align(
           alignment: Alignment.bottomCenter,
           child: AnimatedContainer(
