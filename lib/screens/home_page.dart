@@ -49,6 +49,13 @@ class _HomePageState extends State<HomePage> {
 
   // ==================================
 
+  // スワイプメニュー開閉
+  void _toggleContainer() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+  }
+
   @override
   void initState() {
     super.initState();

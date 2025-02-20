@@ -163,13 +163,6 @@ extension _HomePageStateExtension on _HomePageState {
     return facilityList.join(', ');
   }
 
-  // スワイプメニュー開閉
-  void _toggleContainer() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-    });
-  }
-
   // 現在地へ移動するカメラ操作
   Future<void> _moveToCurrentLocation() async {
     if (_currentPosition == null) {
