@@ -1,15 +1,14 @@
 part of home_page;
 
 extension _HomePageStateExtension on _HomePageState {
+  // サービスのインスタンスを生成
+  static final LocationService _locationService = LocationService();
+  static final FirebaseService _firebaseService = FirebaseService();
 
   // 現在地を取得
   Future<void> _getCurrentLocation() async {
     try {
-      Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
+      final position = await _locationService.getCurrentLocation();
       setState(() {
         _currentPosition = position;
       });
@@ -22,12 +21,7 @@ extension _HomePageStateExtension on _HomePageState {
   // Firestoreからトイレ情報を取得し、Markerを作成
   Future<void> _loadToilets() async {
     try {
-      Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
-      );
-
+      final position = await _locationService.getCurrentLocation();
       setState(() {
         _currentPosition = position;
       });
@@ -41,45 +35,18 @@ extension _HomePageStateExtension on _HomePageState {
 
       _filterNearbyToilets();
 
-      QuerySnapshot querySnapshot =
-          await FirebaseFirestore.instance.collection('toilets').get();
-
-      final List<Map<String, dynamic>> toilets = [];
+      final toilets = await _firebaseService.loadToilets();
       final Set<Marker> markers = {};
 
-      for (var doc in querySnapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final GeoPoint? location = data['location'] as GeoPoint?;
-        final String name = data['buildingName'] ?? '名前未設定';
-        final int rating = data['rating'] ?? 0;
-        final Map<String, dynamic> type = data['type'] ?? {};
-        final Map<String, dynamic> facilities = data['facilities'] ?? {};
+      for (var toiletData in toilets) {
+        final GeoPoint location = toiletData['location'] as GeoPoint;
 
-        // locationがnullの場合はスキップ
-        if (location == null) {
-          debugPrint('Warning: トイレデータに位置情報がありません。ドキュメントID: ${doc.id}');
-          continue;
-        }
-
-        // トイレデータの構造を統一してリストに追加
-        final toiletData = {
-          "id": doc.id,
-          "name": name,
-          "location": location,
-          "rating": rating,
-          "type": type,
-          "facilities": facilities,
-        };
-
-        toilets.add(toiletData);
-
-        // Marker の作成
         markers.add(Marker(
-          markerId: MarkerId(doc.id),
+          markerId: MarkerId(toiletData['id']),
           position: LatLng(location.latitude, location.longitude),
           infoWindow: InfoWindow(
-            title: data['buildingName'],
-            snippet: '満足度: ${data['rating']}',
+            title: toiletData['name'],
+            snippet: '満足度: ${toiletData['rating']}',
           ),
           onTap: () {
             _showToiletDetails(toiletData);
@@ -89,7 +56,7 @@ extension _HomePageStateExtension on _HomePageState {
 
       setState(() {
         _markers.addAll(markers);
-        _nearbyToilets = toilets; // 近くのトイレリスト用に設定
+        _nearbyToilets = toilets;
       });
     } catch (e) {
       debugPrint('トイレ情報の取得中にエラーが発生しました: $e');

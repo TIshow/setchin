@@ -12,6 +12,10 @@ import '../components/templates/floating_buttons.dart';
 import '../components/templates/map_view.dart';
 import '../components/organisms/search_bar.dart';
 
+// my services
+import '../services/firestore_service.dart';
+import '../services/location_service.dart';
+
 // 分割先のファイルを指定
 part 'home_page_methods.dart';
 
