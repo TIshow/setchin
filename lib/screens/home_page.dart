@@ -45,8 +45,6 @@ class _HomePageState extends State<HomePage> {
   final bool _babyChair = false;
   final bool _wheelchair = false;
 
-  // ==================================
-
   // サービスのインスタンスを生成
   static final LocationService _locationService = LocationService.instance;
   static final FirebaseService _firebaseService = FirebaseService.instance;
@@ -104,7 +102,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> _moveToCurrentLocation() async {
     _locationService.moveToCurrentLocation(mapController, _currentPosition);
   }
-  // ==================================
 
   // スワイプメニュー開閉
   void _toggleContainer() {
