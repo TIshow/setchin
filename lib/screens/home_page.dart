@@ -1,23 +1,24 @@
 library home_page;
 
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 
-// my packages
+// packages
 import '../components/templates/swipe_up_menu.dart';
 import '../components/templates/floating_buttons.dart';
 import '../components/templates/map_view.dart';
 import '../components/organisms/search_bar.dart';
 
-// my services
+// services
 import '../services/firestore_service.dart';
 import '../services/location_service.dart';
 
-// 分割先のファイルを指定
-part 'home_page_methods.dart';
+// utils
+import '../utils/location_utils.dart';
+
+// widgets
+import '../widgets/toilet_details_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,14 +29,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late GoogleMapController mapController;
-  final Set<Marker> _markers = {};       // 地図上のMarkerのセット
+  final Set<Marker> _markers = {}; // 地図上のMarkerのセット
   List<Map<String, dynamic>> _nearbyToilets = []; // 近くのトイレ
-  Position? _currentPosition;            // 現在地
+  Position? _currentPosition; // 現在地
   double _currentZoomLevel = 15;
   bool _isExpanded = false;
-
-  // PageView のコントローラー（例：近くのトイレで選択されたトイレの表示用）
-  final PageController _pageController = PageController();
 
   // チェックボックスの状態
   final bool _female = false;
@@ -47,6 +45,65 @@ class _HomePageState extends State<HomePage> {
   final bool _babyChair = false;
   final bool _wheelchair = false;
 
+  // ==================================
+
+  // サービスのインスタンスを生成
+  static final LocationService _locationService = LocationService.instance;
+  static final FirebaseService _firebaseService = FirebaseService.instance;
+
+  // 現在地を取得
+  Future<void> _getCurrentLocation() async {
+    _locationService.getCurrentLocationAndUpdateState(
+      (position) {
+        setState(() {
+          _currentPosition = position;
+        });
+        _filterNearbyToilets();
+      },
+      (errorMessage) {
+        debugPrint("現在地の取得中にエラー: $errorMessage");
+      },
+    );
+  }
+
+  // Firestoreからトイレ情報を取得し、Markerを作成
+  Future<void> _loadToilets() async {
+    _firebaseService.loadToiletsAndUpdateState(
+      mapController,
+      (position) {
+        setState(() {
+          _currentPosition = position;
+        });
+      },
+      (toilets, markers) {
+        setState(() {
+          _markers.addAll(markers);
+          _nearbyToilets = toilets;
+        });
+      },
+      (errorMessage) {
+        debugPrint(errorMessage);
+      },
+    );
+  }
+
+  // 現在地から一定距離内のトイレをフィルタリング
+  void _filterNearbyToilets([List<Map<String, dynamic>>? toilets]) {
+    setState(() {
+      _nearbyToilets = LocationUtils.filterNearbyToilets(
+          toilets ?? _nearbyToilets, _currentPosition);
+    });
+  }
+
+  // トイレ情報をダイアログで表示
+  void _showToiletDetails(Map<String, dynamic> data) {
+    ToiletDetailsDialog.show(context, data);
+  }
+
+  // 現在地へ移動するカメラ操作
+  Future<void> _moveToCurrentLocation() async {
+    _locationService.moveToCurrentLocation(mapController, _currentPosition);
+  }
   // ==================================
 
   // スワイプメニュー開閉
@@ -124,7 +181,7 @@ class _HomePageState extends State<HomePage> {
             ),
             child: SwipeUpMenu(
               isExpanded: _isExpanded,
-              toggleMenu: _toggleContainer,  // 分割先メソッド
+              toggleMenu: _toggleContainer, // 分割先メソッド
               nearbyToilets: _nearbyToilets,
               showToiletDetails: _showToiletDetails, // 分割先メソッド
               female: _female,
