@@ -18,7 +18,7 @@ import '../services/location_service.dart';
 import '../utils/location_utils.dart';
 
 // widgets
-import '../widgets/toilet_details_dialog.dart';
+import '../components/organisms/toilet_details_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

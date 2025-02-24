@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../utils/format_utils.dart';
+import '../../utils/format_utils.dart';
 
 class ToiletDetailsDialog {
   static void show(BuildContext context, Map<String, dynamic> data) {
