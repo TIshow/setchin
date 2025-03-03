@@ -5,8 +5,10 @@
 //
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:namer_app/components/organisms/toilet_details_dialog.dart';
 import 'location_service.dart';
 
 class FirebaseService {
@@ -50,6 +52,7 @@ class FirebaseService {
 
   // Firestoreからトイレ情報を取得し、状態を更新
   Future<void> loadToiletsAndUpdateState(
+      BuildContext context,
       GoogleMapController? mapController,
       Function(Position) onLocationSuccess,
       Function(List<Map<String, dynamic>>, Set<Marker>) onDataSuccess,
@@ -77,6 +80,9 @@ class FirebaseService {
             title: toiletData['name'],
             snippet: '満足度: ${toiletData['rating']}',
           ),
+          onTap: () {
+            ToiletDetailsDialog.show(context, toiletData);
+          },
         ));
       }
 

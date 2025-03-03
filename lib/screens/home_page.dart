@@ -67,6 +67,7 @@ class _HomePageState extends State<HomePage> {
   // Firestoreからトイレ情報を取得し、Markerを作成
   Future<void> _loadToilets() async {
     _firebaseService.loadToiletsAndUpdateState(
+      context,
       mapController,
       (position) {
         setState(() {
