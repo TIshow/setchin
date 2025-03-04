@@ -124,8 +124,11 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => const SignUpPage(),
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation, secondaryAnimation) =>
+                                  const SignUpPage(),
+                              transitionDuration: Duration.zero, // スライドなし
+                              reverseTransitionDuration: Duration.zero, // 戻るときもスライドなし
                             ),
                           );
                         },

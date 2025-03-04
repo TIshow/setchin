@@ -100,8 +100,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsPage(),
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const SettingsPage(),
+                      transitionDuration: Duration.zero, // スライドなし
+                      reverseTransitionDuration: Duration.zero, // 戻るときもスライドなし
                     ),
                   );
                 },

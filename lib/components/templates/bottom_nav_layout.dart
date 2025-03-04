@@ -25,8 +25,11 @@ class _BottomNavLayoutState extends State<BottomNavLayout> {
     if (index != widget.currentIndex) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => BottomNavLayout(currentIndex: index),
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              BottomNavLayout(currentIndex: index),
+          transitionDuration: Duration.zero, // スライドなし
+          reverseTransitionDuration: Duration.zero, // 戻るときもスライドなし
         ),
       );
     }

@@ -41,7 +41,12 @@ class _SignUpPageState extends State<SignUpPage> {
       if (user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => SetUsernamePage(userId: user.uid)),
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                SetUsernamePage(userId: user.uid),
+            transitionDuration: Duration.zero, // スライドなし
+            reverseTransitionDuration: Duration.zero, // 戻るときもスライドなし
+          ),
         );
       }
     } catch (e) {
@@ -128,7 +133,12 @@ class _SignUpPageState extends State<SignUpPage> {
                         await _authService.signInWithGoogle();
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const HomePage()),
+                          PageRouteBuilder(
+                            pageBuilder: (context, animation, secondaryAnimation) =>
+                                const HomePage(),
+                            transitionDuration: Duration.zero, // スライドなし
+                            reverseTransitionDuration: Duration.zero, // 戻るときもスライドなし
+                          ),
                         );
                       } catch (e) {
                         setState(() {
@@ -145,8 +155,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginPage(),
+                        PageRouteBuilder(
+                          pageBuilder: (context, animation, secondaryAnimation) =>
+                              const LoginPage(),
+                          transitionDuration: Duration.zero, // スライドなし
+                          reverseTransitionDuration: Duration.zero, // 戻るときもスライドなし
                         ),
                       );
                     },
