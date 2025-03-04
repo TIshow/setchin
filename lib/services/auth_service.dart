@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // 1) 認証状態の監視
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -26,14 +28,18 @@ class AuthService {
   }
 
   // 4) メールアドレスで新規登録
-  Future<void> signUpWithEmail(String email, String password) async {
+  Future<User?> signUpWithEmail(String email, String password) async {
     try {
-      await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = 
+        await _auth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      return userCredential.user; 
+      // userCredential.user は User? を返す
     } catch (e) {
-      throw Exception("Failed to sign up with email: $e");
+      // 失敗時は例外を投げる
+      throw Exception('登録エラー: $e');
     }
   }
 
@@ -71,5 +77,26 @@ class AuthService {
     } catch (e) {
       throw Exception("Failed to sign out: $e");
     }
+  }
+
+  // Firestore にユーザーネームを保存
+  Future<void> saveUsername(String userId, String username) async {
+    await _firestore.collection('users').doc(userId).set({
+      'username': username,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Firestore からユーザーネームを取得
+  Future<String?> getUsername(String userId) async {
+    DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
+    return userDoc.exists ? userDoc.get('username') : null;
+  }
+  
+  // ユーザー名を更新
+  Future<void> updateUsername(String userId, String newUsername) async {
+    await _firestore.collection('users').doc(userId).update({
+      'username': newUsername,
+    });
   }
 }

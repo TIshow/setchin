@@ -1,47 +1,96 @@
+// 
+// profile_page.dart
+// プロフィール画面用のページ
+//
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-// ここで AuthService をインポート
 import '../services/auth_service.dart';
 import 'login_page.dart';
 import 'settings_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final AuthService _authService = AuthService();
+  String _username = "ユーザー名"; // 初期値
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUsername();
+  }
+
+  Future<void> _fetchUsername() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      String? username = await _authService.getUsername(user.uid);
+      setState(() {
+        _username = username ?? "ユーザー名未設定";
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _changeUsername() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    String? newUsername = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        String tempUsername = _username;
+        return AlertDialog(
+          title: const Text("ユーザー名を変更"),
+          content: TextField(
+            onChanged: (value) {
+              tempUsername = value;
+            },
+            decoration: const InputDecoration(hintText: "新しいユーザー名"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, null),
+              child: const Text("キャンセル"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, tempUsername),
+              child: const Text("変更"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newUsername != null && newUsername.isNotEmpty) {
+      await _authService.updateUsername(user.uid, newUsername);
+      setState(() {
+        _username = newUsername;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // 仮データ
-    final List<Map<String, String>> postedToilets = [
-      {"name": "新宿駅 トイレ", "location": "東京都新宿区"},
-      {"name": "渋谷駅 トイレ", "location": "東京都渋谷区"},
-      {"name": "東京駅 トイレ", "location": "東京都千代田区"},
-    ];
-
-    final List<Map<String, String>> favoriteToilets = [
-      {"name": "六本木ヒルズ トイレ", "location": "東京都港区"},
-      {"name": "上野動物園 トイレ", "location": "東京都台東区"},
-    ];
-
-    final authService = AuthService();
-
     return StreamBuilder<User?>(
-      // FirebaseAuthのログイン状態を監視
-      stream: authService.authStateChanges,
+      stream: _authService.authStateChanges,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          // 読み込み中（ログイン状態の判定中）はローディング表示
+        if (snapshot.connectionState == ConnectionState.waiting || _isLoading) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
         if (!snapshot.hasData) {
-          // ユーザーがnull = 未ログイン → ログインページへ
           return const LoginPage();
         }
 
-        // ログイン中の場合 → プロフィール画面を表示
         return Scaffold(
           appBar: AppBar(
             title: const Text('プロフィール'),
@@ -65,20 +114,29 @@ class ProfilePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 30,
                       child: Text(
-                        "A", // 頭文字（仮）
+                        "A", // 仮のアイコン
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    SizedBox(width: 16),
-                    Text(
-                      "ユーザー名",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _username,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        TextButton(
+                          onPressed: _changeUsername,
+                          child: const Text("ユーザー名を変更"),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -87,82 +145,28 @@ class ProfilePage extends StatelessWidget {
                   "投稿したトイレ",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 10),
-                Column(
-                  children: postedToilets
-                      .take(3)
-                      .map(
-                        (toilet) => ListTile(
-                          title: Text(toilet["name"]!),
-                          subtitle: Text(toilet["location"]!),
-                          leading: const Icon(Icons.location_pin),
-                        ),
-                      )
-                      .toList(),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      // 一覧ページへの遷移を実装（予定）
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Placeholder(), // 仮
-                        ),
-                      );
-                    },
-                    child: const Text("一覧を見る"),
-                  ),
-                ),
+                // 投稿リスト（仮データ）
+                _buildToiletList([
+                  {"name": "新宿駅 トイレ", "location": "東京都新宿区"},
+                  {"name": "渋谷駅 トイレ", "location": "東京都渋谷区"},
+                  {"name": "東京駅 トイレ", "location": "東京都千代田区"},
+                ]),
                 const SizedBox(height: 30),
                 const Text(
                   "お気に入りをしたトイレ",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 10),
-                Column(
-                  children: favoriteToilets
-                      .take(3)
-                      .map(
-                        (toilet) => ListTile(
-                          title: Text(toilet["name"]!),
-                          subtitle: Text(toilet["location"]!),
-                          leading: const Icon(Icons.favorite),
-                        ),
-                      )
-                      .toList(),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      // 一覧ページへの遷移を実装（予定）
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Placeholder(), // 仮
-                        ),
-                      );
-                    },
-                    child: const Text("一覧を見る"),
-                  ),
-                ),
-                // spacer
+                _buildToiletList([
+                  {"name": "六本木ヒルズ トイレ", "location": "東京都港区"},
+                  {"name": "上野動物園 トイレ", "location": "東京都台東区"},
+                ]),
                 const SizedBox(height: 80),
-                // ログアウトボタン
                 ElevatedButton(
-                  // 真ん中に
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
                   ),
                   onPressed: () async {
-                    try {
-                      await authService.signOut();
-                    } catch (e) {
-                      // エラーハンドリング: ダイアログ表示など
-                      debugPrint('$e');
-                    }
+                    await _authService.signOut();
                   },
                   child: const Text('ログアウト'),
                 ),
@@ -171,6 +175,20 @@ class ProfilePage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildToiletList(List<Map<String, String>> toilets) {
+    return Column(
+      children: toilets
+          .map(
+            (toilet) => ListTile(
+              title: Text(toilet["name"]!),
+              subtitle: Text(toilet["location"]!),
+              leading: const Icon(Icons.location_pin),
+            ),
+          )
+          .toList(),
     );
   }
 }
