@@ -8,6 +8,7 @@ import '../services/auth_service.dart';
 import 'home_page.dart';
 import 'login_page.dart';
 import 'set_username_page.dart';
+import '../components/templates/bottom_nav_layout.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -135,9 +136,9 @@ class _SignUpPageState extends State<SignUpPage> {
                           context,
                           PageRouteBuilder(
                             pageBuilder: (context, animation, secondaryAnimation) =>
-                                const HomePage(),
-                            transitionDuration: Duration.zero, // スライドなし
-                            reverseTransitionDuration: Duration.zero, // 戻るときもスライドなし
+                                const BottomNavLayout(currentIndex: 0), // HomePage ではなく BottomNavLayout
+                            transitionDuration: Duration.zero,
+                            reverseTransitionDuration: Duration.zero,
                           ),
                         );
                       } catch (e) {

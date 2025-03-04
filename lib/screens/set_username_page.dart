@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'home_page.dart';
+import '../components/templates/bottom_nav_layout.dart';
 
 class SetUsernamePage extends StatefulWidget {
   final String userId;
@@ -31,7 +32,15 @@ class _SetUsernamePageState extends State<SetUsernamePage> {
 
     try {
       await _authService.saveUsername(widget.userId, username);
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const BottomNavLayout(currentIndex: 0), // HomePage ではなく BottomNavLayout
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+      );
     } catch (e) {
       setState(() {
         _errorMessage = '保存中にエラーが発生しました';
