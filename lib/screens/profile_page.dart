@@ -32,7 +32,11 @@ class _ProfilePageState extends State<ProfilePage> {
     if (user != null) {
       String? username = await _authService.getUsername(user.uid);
       setState(() {
-        _username = username ?? "ユーザー名未設定";
+        _username = username ?? "未設定"; // `null` の場合デフォルト値をセット
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
         _isLoading = false;
       });
     }

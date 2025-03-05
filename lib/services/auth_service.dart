@@ -89,9 +89,18 @@ class AuthService {
 
   // Firestore からユーザーネームを取得
   Future<String?> getUsername(String userId) async {
+  try {
     DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
-    return userDoc.exists ? userDoc.get('username') : null;
+    if (userDoc.exists && userDoc.data() != null) {
+      return userDoc.get('username') ?? "未設定";
+    } else {
+      return "未設定"; // デフォルト値を返す
+    }
+  } catch (e) {
+    print("Firestore ユーザー名取得エラー: $e");
+    return "エラー"; // エラー時もループしないように
   }
+}
   
   // ユーザー名を更新
   Future<void> updateUsername(String userId, String newUsername) async {
