@@ -18,96 +18,64 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final AuthService _authService = AuthService();
-  String _username = "ユーザー名"; // 初期値
+  String _username = "ユーザー名";
   bool _isLoading = true;
-  // 投稿したトイレ
+  String? _profileImageUrl;
   List<Map<String, dynamic>> _postedToilets = [];
-  // お気に入り登録したトイレ
-  List<Map<String, dynamic>> _favorites = []; // お気に入りリスト
+  List<Map<String, dynamic>> _favorites = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchUsername();
     _fetchUserData();
   }
 
+  /// 🔄 ユーザーデータを更新
   Future<void> _fetchUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      print("👤 ユーザーID: ${user.uid}");
+    setState(() {
+      _isLoading = true; // ✅ ローディング開始
+    });
 
-      String? username = await _authService.getUsername(user.uid);
-      List<Map<String, dynamic>> toilets = await _authService.getUserToilets(user.uid);
-      List<Map<String, dynamic>> favorites = await _authService.getUserFavorites(user.uid); // お気に入り取得
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        print("👤 ユーザーID: ${user.uid}");
 
-      print("📝 投稿データ取得結果: ${toilets.length} 件");
-      print("⭐ お気に入り取得結果: ${favorites.length} 件");
+        String? username = await _authService.getUsername(user.uid);
+        String? profileImageUrl = await _authService.getProfileImageUrl(user.uid);
+        List<Map<String, dynamic>> toilets = await _authService.getUserToilets(user.uid);
+        List<Map<String, dynamic>> favorites = await _authService.getUserFavorites(user.uid);
 
-      setState(() {
-        _username = username ?? "未設定";
-        _postedToilets = toilets;
-        _favorites = favorites;
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
+        print("📝 投稿データ取得結果: ${toilets.length} 件");
+        print("⭐ お気に入り取得結果: ${favorites.length} 件");
 
-  Future<void> _fetchUsername() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      String? username = await _authService.getUsername(user.uid);
+        setState(() {
+          _username = username ?? "未設定";
+          _profileImageUrl = profileImageUrl;
+          _postedToilets = toilets;
+          _favorites = favorites;
+          _isLoading = false; // ✅ ローディング終了
+        });
+      } else {
+        setState(() {
+          _isLoading = false; // ✅ ユーザーがいない場合もローディング終了
+        });
+      }
+    } catch (e) {
+      print("🔥 ユーザーデータ取得エラー: $e");
       setState(() {
-        _username = username ?? "未設定"; // `null` の場合デフォルト値をセット
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
+        _isLoading = false; // ✅ エラー時もローディング終了
       });
     }
   }
 
-  Future<void> _changeUsername() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    String? newUsername = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        String tempUsername = _username;
-        return AlertDialog(
-          title: const Text("ユーザー名を変更"),
-          content: TextField(
-            onChanged: (value) {
-              tempUsername = value;
-            },
-            decoration: const InputDecoration(hintText: "新しいユーザー名"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, null),
-              child: const Text("キャンセル"),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, tempUsername),
-              child: const Text("変更"),
-            ),
-          ],
-        );
-      },
+  /// 🔄 更新ボタンを押したときの処理
+  Future<void> _refreshUserData() async {
+    await _fetchUserData();
+    if (!mounted) return; // 🔄 画面が破棄されていたら処理を中断
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('プロフィール情報を更新しました')),
     );
-
-    if (newUsername != null && newUsername.isNotEmpty) {
-      await _authService.updateUsername(user.uid, newUsername);
-      setState(() {
-        _username = newUsername;
-      });
-    }
   }
 
   @override
@@ -129,6 +97,12 @@ class _ProfilePageState extends State<ProfilePage> {
           appBar: AppBar(
             title: const Text('プロフィール'),
             actions: [
+              // 🔄 更新ボタン
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: "更新",
+                onPressed: _refreshUserData,
+              ),
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
@@ -137,8 +111,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     PageRouteBuilder(
                       pageBuilder: (context, animation, secondaryAnimation) =>
                           const SettingsPage(),
-                      transitionDuration: Duration.zero, // スライドなし
-                      reverseTransitionDuration: Duration.zero, // 戻るときもスライドなし
+                      transitionDuration: Duration.zero,
+                      reverseTransitionDuration: Duration.zero,
                     ),
                   );
                 },
@@ -152,13 +126,25 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      child: Text(
-                        "A", // 仮のアイコン
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    GestureDetector(
+                      onTap: () async {
+                        String? newImageUrl = await _authService.uploadProfileImage();
+                        if (newImageUrl != null) {
+                          setState(() {
+                            _profileImageUrl = newImageUrl;
+                          });
+                        }
+                      },
+                      child: CircleAvatar(
+                        radius: 30,
+                        backgroundImage: _profileImageUrl != null
+                            ? NetworkImage(_profileImageUrl!)
+                            : null,
+                        child: _profileImageUrl == null
+                            ? const Icon(Icons.person, size: 30)
+                            : null,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -170,7 +156,41 @@ class _ProfilePageState extends State<ProfilePage> {
                           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         TextButton(
-                          onPressed: _changeUsername,
+                          onPressed: () async {
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user == null) return;
+                            String? newUsername = await showDialog<String>(
+                              context: context,
+                              builder: (context) {
+                                String tempUsername = _username;
+                                return AlertDialog(
+                                  title: const Text("ユーザー名を変更"),
+                                  content: TextField(
+                                    onChanged: (value) {
+                                      tempUsername = value;
+                                    },
+                                    decoration: const InputDecoration(hintText: "新しいユーザー名"),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, null),
+                                      child: const Text("キャンセル"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, tempUsername),
+                                      child: const Text("変更"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                            if (newUsername != null && newUsername.isNotEmpty) {
+                              await _authService.updateUsername(user.uid, newUsername);
+                              setState(() {
+                                _username = newUsername;
+                              });
+                            }
+                          },
                           child: const Text("ユーザー名を変更"),
                         ),
                       ],
@@ -188,7 +208,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   "お気に入りをしたトイレ",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                _buildToiletList(_favorites), // お気に入りリストを表示
+                _buildToiletList(_favorites),
                 const SizedBox(height: 80),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(

@@ -1,9 +1,17 @@
+import 'dart:io';
+import 'dart:typed_data'; // Web向け
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img; // 画像圧縮用
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // 1) 認証状態の監視
@@ -144,36 +152,90 @@ class AuthService {
 
   // ユーザーのお気にいいりしたデータを取得
   Future<List<Map<String, dynamic>>> getUserFavorites(String userId) async {
-  try {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection('favorites')
-        .where('userId', isEqualTo: userId)
-        .get();
-
-    List<Map<String, dynamic>> favorites = [];
-
-    for (var doc in querySnapshot.docs) {
-      String toiletId = doc['toiletId'];
-
-      // トイレの詳細を取得
-      DocumentSnapshot toiletDoc = await FirebaseFirestore.instance
-          .collection('toilets')
-          .doc(toiletId)
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('favorites')
+          .where('userId', isEqualTo: userId)
           .get();
 
-      if (toiletDoc.exists) {
-        favorites.add({
-          "name": toiletDoc["buildingName"] ?? "名称不明",
-          "location": "${toiletDoc["location"].latitude}, ${toiletDoc["location"].longitude}",
-          "rating": toiletDoc["rating"] ?? 0,
-        });
-      }
-    }
+      List<Map<String, dynamic>> favorites = [];
 
-    return favorites;
-  } catch (e) {
-    print("🔥 お気に入り取得エラー: $e");
-    return [];
+      for (var doc in querySnapshot.docs) {
+        String toiletId = doc['toiletId'];
+
+        // トイレの詳細を取得
+        DocumentSnapshot toiletDoc = await FirebaseFirestore.instance
+            .collection('toilets')
+            .doc(toiletId)
+            .get();
+
+        if (toiletDoc.exists) {
+          favorites.add({
+            "name": toiletDoc["buildingName"] ?? "名称不明",
+            "location": "${toiletDoc["location"].latitude}, ${toiletDoc["location"].longitude}",
+            "rating": toiletDoc["rating"] ?? 0,
+          });
+        }
+      }
+
+      return favorites;
+    } catch (e) {
+      print("🔥 お気に入り取得エラー: $e");
+      return [];
+    }
   }
-}
+
+  // 画像を選択して Firebase Storage にアップロード
+  Future<String?> uploadProfileImage() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        print("⚠️ ユーザーがログインしていません");
+        return null;
+      }
+
+      // 画像をギャラリーから選択
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image == null) {
+        print("⚠️ 画像が選択されませんでした");
+        return null;
+      }
+
+      String filePath = 'profile_images/${user.uid}.jpg';
+      UploadTask uploadTask;
+
+      if (kIsWeb) {
+        // 🌐 Web用アップロード処理
+        Uint8List imageBytes = await image.readAsBytes();
+        uploadTask = _storage.ref(filePath).putData(imageBytes);
+      } else {
+        // 📱 モバイル用アップロード処理
+        uploadTask = _storage.ref(filePath).putFile(File(image.path));
+      }
+
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      print("✅ 画像アップロード成功: $downloadUrl");
+
+      // Firestore に `profileImageUrl` を保存
+      await _firestore.collection('users').doc(user.uid).set(
+        {'profileImageUrl': downloadUrl},
+        SetOptions(merge: true),
+      );
+
+      print("✅ Firestore に profileImageUrl を保存");
+      return downloadUrl;
+    } catch (e) {
+      print("🔥 画像アップロードエラー: $e");
+      return null;
+    }
+  }
+
+  // Firestore からプロフィール画像の URL を取得
+  Future<String?> getProfileImageUrl(String userId) async {
+    DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
+    return userDoc['profileImageUrl'];
+  }
 }
