@@ -76,10 +76,10 @@ class FirebaseService {
         markers.add(Marker(
           markerId: MarkerId(toiletData['id']),
           position: LatLng(location.latitude, location.longitude),
-          infoWindow: InfoWindow(
-            title: toiletData['name'],
-            snippet: '満足度: ${toiletData['rating']}',
-          ),
+          // infoWindow: InfoWindow(
+          //   title: toiletData['name'],
+          //   snippet: '満足度: ${toiletData['rating']}',
+          // ),
           onTap: () {
             ToiletDetailsDialog.show(context, toiletData, toiletData['id']);
           },
