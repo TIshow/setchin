@@ -22,6 +22,8 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = true;
   // 投稿したトイレ
   List<Map<String, dynamic>> _postedToilets = [];
+  // お気に入り登録したトイレ
+  List<Map<String, dynamic>> _favorites = []; // お気に入りリスト
 
   @override
   void initState() {
@@ -37,12 +39,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
       String? username = await _authService.getUsername(user.uid);
       List<Map<String, dynamic>> toilets = await _authService.getUserToilets(user.uid);
+      List<Map<String, dynamic>> favorites = await _authService.getUserFavorites(user.uid); // お気に入り取得
 
       print("📝 投稿データ取得結果: ${toilets.length} 件");
+      print("⭐ お気に入り取得結果: ${favorites.length} 件");
 
       setState(() {
         _username = username ?? "未設定";
         _postedToilets = toilets;
+        _favorites = favorites;
         _isLoading = false;
       });
     } else {
@@ -183,10 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   "お気に入りをしたトイレ",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                _buildToiletList([
-                  {"name": "六本木ヒルズ トイレ", "location": "東京都港区"},
-                  {"name": "上野動物園 トイレ", "location": "東京都台東区"},
-                ]),
+                _buildToiletList(_favorites), // お気に入りリストを表示
                 const SizedBox(height: 80),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(

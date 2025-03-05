@@ -81,7 +81,7 @@ class FirebaseService {
             snippet: '満足度: ${toiletData['rating']}',
           ),
           onTap: () {
-            ToiletDetailsDialog.show(context, toiletData);
+            ToiletDetailsDialog.show(context, toiletData, toiletData['id']);
           },
         ));
       }

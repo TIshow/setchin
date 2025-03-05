@@ -141,4 +141,39 @@ class AuthService {
       return [];
     }
   }
+
+  // ユーザーのお気にいいりしたデータを取得
+  Future<List<Map<String, dynamic>>> getUserFavorites(String userId) async {
+  try {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('favorites')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    List<Map<String, dynamic>> favorites = [];
+
+    for (var doc in querySnapshot.docs) {
+      String toiletId = doc['toiletId'];
+
+      // トイレの詳細を取得
+      DocumentSnapshot toiletDoc = await FirebaseFirestore.instance
+          .collection('toilets')
+          .doc(toiletId)
+          .get();
+
+      if (toiletDoc.exists) {
+        favorites.add({
+          "name": toiletDoc["buildingName"] ?? "名称不明",
+          "location": "${toiletDoc["location"].latitude}, ${toiletDoc["location"].longitude}",
+          "rating": toiletDoc["rating"] ?? 0,
+        });
+      }
+    }
+
+    return favorites;
+  } catch (e) {
+    print("🔥 お気に入り取得エラー: $e");
+    return [];
+  }
+}
 }
