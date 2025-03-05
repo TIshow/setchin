@@ -108,4 +108,37 @@ class AuthService {
       'username': newUsername,
     });
   }
+
+  // 投稿したトイレ一覧を取得
+  Future<List<Map<String, dynamic>>> getUserToilets(String userId) async {
+    try {
+      print("📡 Firestore からユーザーの投稿を取得: userId = $userId");
+
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('toilets')
+          .where('registeredBy', isEqualTo: userId)
+          .orderBy('createdAt', descending: true) // 新しい順にソート
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        print("⚠️ 投稿が見つかりませんでした");
+        return [];
+      }
+
+      print("✅ Firestore から投稿を取得: ${querySnapshot.docs.length} 件");
+
+      return querySnapshot.docs.map((doc) {
+        print("📝 取得したデータ: ${doc.data()}");
+        return {
+          "name": doc["buildingName"] ?? "名称不明",
+          "location": "${doc["location"].latitude}, ${doc["location"].longitude}",
+          "rating": doc["rating"] ?? 0,
+          "createdAt": doc["createdAt"]?.toDate().toString() ?? "不明",
+        };
+      }).toList();
+    } catch (e) {
+      print("🔥 投稿一覧取得エラー: $e");
+      return [];
+    }
+  }
 }

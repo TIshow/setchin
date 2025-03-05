@@ -20,11 +20,36 @@ class _ProfilePageState extends State<ProfilePage> {
   final AuthService _authService = AuthService();
   String _username = "ユーザー名"; // 初期値
   bool _isLoading = true;
+  // 投稿したトイレ
+  List<Map<String, dynamic>> _postedToilets = [];
 
   @override
   void initState() {
     super.initState();
     _fetchUsername();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      print("👤 ユーザーID: ${user.uid}");
+
+      String? username = await _authService.getUsername(user.uid);
+      List<Map<String, dynamic>> toilets = await _authService.getUserToilets(user.uid);
+
+      print("📝 投稿データ取得結果: ${toilets.length} 件");
+
+      setState(() {
+        _username = username ?? "未設定";
+        _postedToilets = toilets;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchUsername() async {
@@ -152,12 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   "投稿したトイレ",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                // 投稿リスト（仮データ）
-                _buildToiletList([
-                  {"name": "新宿駅 トイレ", "location": "東京都新宿区"},
-                  {"name": "渋谷駅 トイレ", "location": "東京都渋谷区"},
-                  {"name": "東京駅 トイレ", "location": "東京都千代田区"},
-                ]),
+                _buildToiletList(_postedToilets),
                 const SizedBox(height: 30),
                 const Text(
                   "お気に入りをしたトイレ",
@@ -185,17 +205,18 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildToiletList(List<Map<String, String>> toilets) {
+  Widget _buildToiletList(List<Map<String, dynamic>> toilets) {
+    if (toilets.isEmpty) {
+      return const Text("投稿がありません", style: TextStyle(color: Colors.grey));
+    }
     return Column(
-      children: toilets
-          .map(
-            (toilet) => ListTile(
-              title: Text(toilet["name"]!),
-              subtitle: Text(toilet["location"]!),
-              leading: const Icon(Icons.location_pin),
-            ),
-          )
-          .toList(),
+      children: toilets.map((toilet) {
+        return ListTile(
+          title: Text(toilet["name"] ?? "名称不明"),
+          subtitle: Text(toilet["location"] ?? "場所不明"),
+          trailing: Text("⭐️ ${toilet["rating"] ?? 0}"),
+        );
+      }).toList(),
     );
   }
 }
