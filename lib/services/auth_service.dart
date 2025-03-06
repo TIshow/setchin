@@ -186,56 +186,82 @@ class AuthService {
   }
 
   // 画像を選択して Firebase Storage にアップロード
-  Future<String?> uploadProfileImage() async {
+  Future<void> uploadProfileImage(void Function(String? newImageUrl) onComplete) async {
+    print("🚀 uploadProfileImage: 開始");
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print("⚠️ ユーザーがログインしていません");
+      onComplete(null);
+      return;
+    }
+
+    final picker = ImagePicker();
+    final XFile? pickedImage = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage == null) {
+      print("⚠️ 画像が選択されませんでした");
+      onComplete(null);
+      return;
+    }
+
+    print("✅ 画像が選択されました: ${pickedImage.path}");
+
     try {
-      final user = _auth.currentUser;
-      if (user == null) {
-        print("⚠️ ユーザーがログインしていません");
-        return null;
-      }
+      Uint8List bytes = await pickedImage.readAsBytes();
+      print("✅ readAsBytes OK. bytes.length = ${bytes.length}");
 
-      // 画像をギャラリーから選択
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-      if (image == null) {
-        print("⚠️ 画像が選択されませんでした");
-        return null;
-      }
+      // ===== ここで圧縮する =====
+      bytes = await compressImage(bytes); 
+      print("✅ 圧縮後 bytes.length = ${bytes.length}");
 
       String filePath = 'profile_images/${user.uid}.jpg';
-      UploadTask uploadTask;
+      final ref = FirebaseStorage.instance.ref(filePath);
 
-      if (kIsWeb) {
-        // 🌐 Web用アップロード処理
-        Uint8List imageBytes = await image.readAsBytes();
-        uploadTask = _storage.ref(filePath).putData(imageBytes);
-      } else {
-        // 📱 モバイル用アップロード処理
-        uploadTask = _storage.ref(filePath).putFile(File(image.path));
-      }
+      print("🚀 putData開始");
+      final uploadTask = ref.putData(bytes);
 
-      TaskSnapshot snapshot = await uploadTask;
-      String downloadUrl = await snapshot.ref.getDownloadURL();
-      print("✅ 画像アップロード成功: $downloadUrl");
+      // 進捗・成功・失敗をハンドリング
+      uploadTask.snapshotEvents.listen((event) {
+        print("📝 進捗: totalBytes=${event.totalBytes}, "
+            "bytesTransferred=${event.bytesTransferred}, "
+            "state=${event.state}");
+      }, onError: (error) {
+        print("🔥 スナップショットエラー: $error");
+      });
 
-      // Firestore に `profileImageUrl` を保存
-      await _firestore.collection('users').doc(user.uid).set(
-        {'profileImageUrl': downloadUrl},
-        SetOptions(merge: true),
-      );
+      final snapshot = await uploadTask.whenComplete(() {
+        print("✅ uploadTask.whenComplete が呼ばれました");
+      });
+      print("✅ putData成功");
 
-      print("✅ Firestore に profileImageUrl を保存");
-      return downloadUrl;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      print("✅ ダウンロードURL取得: $downloadUrl");
+
+      // Firestore に保存
+      await FirebaseFirestore.instance.collection('users').doc(user.uid)
+        .set({'profileImageUrl': downloadUrl}, SetOptions(merge: true));
+
+      print("✅ FirestoreにprofileImageUrl保存完了");
+      onComplete(downloadUrl);
+
     } catch (e) {
       print("🔥 画像アップロードエラー: $e");
-      return null;
+      onComplete(null);
     }
   }
-
   // Firestore からプロフィール画像の URL を取得
   Future<String?> getProfileImageUrl(String userId) async {
     DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
     return userDoc['profileImageUrl'];
+  }
+
+  // 画像の圧縮
+  Future<Uint8List> compressImage(Uint8List originalBytes) async {
+    img.Image? decodedImage = img.decodeImage(originalBytes);
+    if (decodedImage == null) return originalBytes;
+
+    // 幅 500px に縮小 & 画質 70%
+    img.Image resized = img.copyResize(decodedImage, width: 500);
+    Uint8List compressed = Uint8List.fromList(img.encodeJpg(resized, quality: 70));
+    return compressed;
   }
 }

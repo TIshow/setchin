@@ -120,106 +120,113 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
             backgroundColor: const Color(0xFFE6E0E9),
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+          body: Center(
+            child: Container(
+              constraints: const BoxConstraints(
+                maxWidth: 600,
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    GestureDetector(
-                      onTap: () async {
-                        String? newImageUrl = await _authService.uploadProfileImage();
-                        if (newImageUrl != null) {
-                          setState(() {
-                            _profileImageUrl = newImageUrl;
-                          });
-                        }
-                      },
-                      child: CircleAvatar(
-                        radius: 30,
-                        backgroundImage: _profileImageUrl != null
-                            ? NetworkImage(_profileImageUrl!)
-                            : null,
-                        child: _profileImageUrl == null
-                            ? const Icon(Icons.person, size: 30)
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text(
-                          _username,
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            final user = FirebaseAuth.instance.currentUser;
-                            if (user == null) return;
-                            String? newUsername = await showDialog<String>(
-                              context: context,
-                              builder: (context) {
-                                String tempUsername = _username;
-                                return AlertDialog(
-                                  title: const Text("ユーザー名を変更"),
-                                  content: TextField(
-                                    onChanged: (value) {
-                                      tempUsername = value;
-                                    },
-                                    decoration: const InputDecoration(hintText: "新しいユーザー名"),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, null),
-                                      child: const Text("キャンセル"),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, tempUsername),
-                                      child: const Text("変更"),
-                                    ),
-                                  ],
+                        GestureDetector(
+                          onTap: () async {
+                            _authService.uploadProfileImage((String? newImageUrl) {
+                              if (newImageUrl != null) {
+                                setState(() {
+                                  _profileImageUrl = newImageUrl;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('プロフィール画像を更新しました')),
                                 );
-                              },
-                            );
-                            if (newUsername != null && newUsername.isNotEmpty) {
-                              await _authService.updateUsername(user.uid, newUsername);
-                              setState(() {
-                                _username = newUsername;
-                              });
-                            }
+                              }
+                            });
                           },
-                          child: const Text("ユーザー名を変更"),
+                          child: CircleAvatar(
+                            radius: 30,
+                            backgroundImage: _profileImageUrl != null ? NetworkImage(_profileImageUrl!) : null,
+                            child: _profileImageUrl == null ? const Icon(Icons.person, size: 30) : null,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _username,
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                final user = FirebaseAuth.instance.currentUser;
+                                if (user == null) return;
+                                String? newUsername = await showDialog<String>(
+                                  context: context,
+                                  builder: (context) {
+                                    String tempUsername = _username;
+                                    return AlertDialog(
+                                      title: const Text("ユーザー名を変更"),
+                                      content: TextField(
+                                        onChanged: (value) {
+                                          tempUsername = value;
+                                        },
+                                        decoration: const InputDecoration(hintText: "新しいユーザー名"),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, null),
+                                          child: const Text("キャンセル"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, tempUsername),
+                                          child: const Text("変更"),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                                if (newUsername != null && newUsername.isNotEmpty) {
+                                  await _authService.updateUsername(user.uid, newUsername);
+                                  setState(() {
+                                    _username = newUsername;
+                                  });
+                                }
+                              },
+                              child: const Text("ユーザー名を変更"),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                    const SizedBox(height: 30),
+                    const Text(
+                      "投稿したトイレ",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    _buildToiletList(_postedToilets),
+                    const SizedBox(height: 30),
+                    const Text(
+                      "お気に入りをしたトイレ",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    _buildToiletList(_favorites),
+                    const SizedBox(height: 80),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      onPressed: () async {
+                        await _authService.signOut();
+                      },
+                      child: const Text('ログアウト'),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 30),
-                const Text(
-                  "投稿したトイレ",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                _buildToiletList(_postedToilets),
-                const SizedBox(height: 30),
-                const Text(
-                  "お気に入りをしたトイレ",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                _buildToiletList(_favorites),
-                const SizedBox(height: 80),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                  ),
-                  onPressed: () async {
-                    await _authService.signOut();
-                  },
-                  child: const Text('ログアウト'),
-                ),
-              ],
+              ),
             ),
           ),
         );
