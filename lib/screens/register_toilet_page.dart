@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterToiletPage extends StatefulWidget {
   const RegisterToiletPage({super.key});
@@ -70,6 +71,12 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
   }
 
   void _submitForm() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print('エラー: ユーザーがログインしていません');
+      return;
+    }
+
     if (_latitude == null || _longitude == null) {
       print('位置情報が取得されていません。');
       return;
@@ -92,7 +99,7 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
         "babyChair": _babyChair,
         "wheelchair": _wheelchair,
       },
-      "registeredBy": "userId1", // TODO: 実際のユーザーIDを取得
+      "registeredBy": user.uid,
       "createdAt": FieldValue.serverTimestamp(),
     };
 

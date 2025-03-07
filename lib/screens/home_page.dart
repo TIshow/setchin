@@ -96,7 +96,8 @@ class _HomePageState extends State<HomePage> {
 
   // トイレ情報をダイアログで表示
   void _showToiletDetails(Map<String, dynamic> data) {
-    ToiletDetailsDialog.show(context, data);
+    String toiletId = data['id'] ?? ''; // Firestore のドキュメント ID を取得
+    ToiletDetailsDialog.show(context, data, toiletId);
   }
 
   // 現在地へ移動するカメラ操作
