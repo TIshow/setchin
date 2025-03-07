@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../screens/home_page.dart';
-import '../screens/register_toilet_page.dart';
-import '../screens/profile_page.dart';
-import '../screens/notifications_page.dart';
+import '../../screens/home_page.dart';
+import '../../screens/register_toilet_page.dart';
+import '../../screens/profile_page.dart';
+import '../../screens/notifications_page.dart';
 
 class BottomNavLayout extends StatefulWidget {
   final int currentIndex;
@@ -25,8 +25,11 @@ class _BottomNavLayoutState extends State<BottomNavLayout> {
     if (index != widget.currentIndex) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => BottomNavLayout(currentIndex: index),
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              BottomNavLayout(currentIndex: index),
+          transitionDuration: Duration.zero, // スライドなし
+          reverseTransitionDuration: Duration.zero, // 戻るときもスライドなし
         ),
       );
     }

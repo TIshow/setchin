@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
-import 'widgets/bottom_nav_layout.dart';
+import 'components/templates/bottom_nav_layout.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 // 条件付きインポート
