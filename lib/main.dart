@@ -13,7 +13,8 @@ import 'utils/web_utils.dart'
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  // LOCALでのみ実行🔥
+  // await dotenv.load(fileName: ".env");
 
   // Firebaseの初期化
   try {
@@ -24,7 +25,7 @@ void main() async {
     print("🔥 Firebase 初期化エラー: $e");
   }
 
-  // LOCAL実行🔥: Webの場合のみGoogle Mapsスクリプトを追加
+  // LOCALでのみ実行🔥: Webの場合のみGoogle Mapsスクリプトを追加
   // if (kIsWeb) {
   //   final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
   //   if (apiKey != null && apiKey.isNotEmpty) {
@@ -34,7 +35,8 @@ void main() async {
   //   }
   // }
   //
-  // DEPLOY時!🔥: Google Maps APIキーを取得
+
+  // DEPLOY時に実行!🔥: Google Maps APIキーを取得
   String? apiKey;
   if (kIsWeb) {
     apiKey = const String.fromEnvironment('GOOGLE_MAPS_API_KEY');
