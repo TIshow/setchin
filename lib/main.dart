@@ -13,8 +13,8 @@ import 'utils/web_utils.dart'
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // LOCALでのみ実行🔥
-  await dotenv.load(fileName: ".env");
+  // LOCAL（web）でのみ実行🔥
+  // await dotenv.load(fileName: ".env");
 
   // Firebaseの初期化
   try {
