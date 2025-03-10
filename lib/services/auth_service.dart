@@ -127,8 +127,14 @@ class AuthService {
       await user.updatePassword(password);
 
       return null;
-    } catch (e) {
-      return '更新に失敗しました: ${e.toString()}';
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        return 'セキュリティのため、もう一度ログインしてください。';
+      } else if (e.code == 'email-already-in-use') {
+        return 'このメールアドレスはすでに使用されています。';
+      } else {
+        return 'エラーが発生しました: ${e.message}';
+      }
     }
   }
 }
