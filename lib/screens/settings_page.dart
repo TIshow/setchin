@@ -11,7 +11,7 @@ class SettingsPage extends StatelessWidget {
     final AuthService _authService = AuthService();
 
     // メッセージダイアログを表示する
-    void _showMessageDialog(String message) {
+    void showMessageDialog(String message) {
       showDialog(
         context: context,
         builder: (context) {
@@ -28,12 +28,29 @@ class SettingsPage extends StatelessWidget {
       );
     }
 
-    void _updateSettings() async {
+    bool isValidEmail(String email) {
+      return RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+          .hasMatch(email);
+    }
+
+    bool isValidPassword(String password) {
+      return password.length >= 6;
+    }
+
+    void updateSettings() async {
       String email = emailController.text.trim();
       String password = passwordController.text.trim();
 
+      if (!isValidEmail(email)) {
+        showMessageDialog('正しいメールアドレスを入力してください');
+        return;
+      }
+      if (!isValidPassword(password)) {
+        showMessageDialog('パスワードは6文字以上で入力してください');
+        return;
+      }
       if (email.isEmpty || password.isEmpty) {
-        _showMessageDialog('メールアドレスとパスワードを入力してください');
+        showMessageDialog('メールアドレスとパスワードを入力してください');
         return;
       }
 
@@ -42,9 +59,9 @@ class SettingsPage extends StatelessWidget {
           await _authService.updateEmailAndPassword(email, password);
 
       if (errorMessage == null) {
-        _showMessageDialog('認証メールを送信いたしました。');
+        showMessageDialog('認証メールを送信いたしました。');
       } else {
-        _showMessageDialog(errorMessage);
+        showMessageDialog(errorMessage);
       }
     }
 
@@ -84,7 +101,7 @@ class SettingsPage extends StatelessWidget {
 
             Center(
               child: ElevatedButton(
-                onPressed: _updateSettings,
+                onPressed: updateSettings,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1D1B20),
                   minimumSize: const Size(150, 50),
