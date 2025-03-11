@@ -90,7 +90,7 @@ class ToiletDetailsDialog {
       await FirebaseFirestore.instance.collection('notifications').add({
         'toUserId': toUserId,
         'fromUserId': user.uid,
-        'message': 'ありがとうボタンが押されました！',
+        'message': '！',
         'createdAt': FieldValue.serverTimestamp(),
         'toiletId': toiletId,
       });
