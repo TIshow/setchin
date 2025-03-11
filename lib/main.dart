@@ -5,6 +5,7 @@ import 'firebase_options.dart';
 import 'components/templates/bottom_nav_layout.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
+import 'components/themes/app_theme.dart';
 
 // 条件付きインポート
 import 'utils/web_utils.dart'
@@ -58,10 +59,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Anonymous Login Demo',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-      ),
+      theme: AppTheme.lightTheme,
       home: const BottomNavLayout(currentIndex: 0),
     );
   }

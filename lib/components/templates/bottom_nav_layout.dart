@@ -41,7 +41,6 @@ class _BottomNavLayoutState extends State<BottomNavLayout> {
       body: _pages[widget.currentIndex], // 現在のページを表示
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFE6E0E9),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.2),
@@ -54,7 +53,6 @@ class _BottomNavLayoutState extends State<BottomNavLayout> {
         child: BottomNavigationBar(
           currentIndex: widget.currentIndex,
           onTap: _onItemTapped,
-          backgroundColor: const Color(0xFFE6E0E9),
           type: BottomNavigationBarType.fixed,
           showSelectedLabels: false,
           showUnselectedLabels: false,

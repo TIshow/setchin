@@ -185,7 +185,6 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('トイレ情報を登録'),
-            backgroundColor: const Color(0xFFE6E0E9),
           ),
           body: Stack(
             children: [
@@ -294,7 +293,6 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
                   child: ElevatedButton(
                     onPressed: _submitForm,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1D1B20),
                       minimumSize: const Size(double.infinity, 50),
                     ),
                     child: const Text(

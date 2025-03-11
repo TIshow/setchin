@@ -25,6 +25,7 @@ class ToiletDetailsDialog {
               Text('種類: ${FormatUtils.formatToiletType(type)}'),
               const SizedBox(height: 10),
               Text('設備: ${FormatUtils.formatFacilities(facilities)}'),
+              const SizedBox(height: 10),
             ],
           ),
           actions: [
@@ -90,7 +91,7 @@ class ToiletDetailsDialog {
       await FirebaseFirestore.instance.collection('notifications').add({
         'toUserId': toUserId,
         'fromUserId': user.uid,
-        'message': '！',
+        'message': 'あなたが投稿した情報に感謝が届いています！',
         'createdAt': FieldValue.serverTimestamp(),
         'toiletId': toiletId,
       });

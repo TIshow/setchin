@@ -46,7 +46,7 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> {
           ? MediaQuery.of(context).size.height * 0.6
           : 60,
       decoration: BoxDecoration(
-        color: const Color(0xFFE6E0E9),
+        color: const Color.fromARGB(255, 255, 255, 255),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
@@ -117,6 +117,7 @@ class _SwipeUpMenuState extends State<SwipeUpMenu> {
                     ),
                     const SizedBox(height: 16),
                     const Text("設備", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
                     Wrap(
                       spacing: 10,
                       runSpacing: 5,
