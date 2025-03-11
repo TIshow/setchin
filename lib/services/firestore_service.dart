@@ -43,6 +43,7 @@ class FirebaseService {
         "rating": rating,
         "type": type,
         "facilities": facilities,
+        "registeredBy": data["registeredBy"],
       };
 
       toilets.add(toiletData);

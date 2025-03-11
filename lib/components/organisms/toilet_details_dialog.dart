@@ -28,21 +28,82 @@ class ToiletDetailsDialog {
             ],
           ),
           actions: [
+            Row(children: [
+              // ありがとうボタン
+              ElevatedButton.icon(
+                icon: const Icon(Icons.thumb_up),
+                label: const Text('ありがとう'),
+                onPressed: () async {
+                  await _sendThanks(context, toiletId, data);
+                },
+              ),
+              const SizedBox(width: 10),
+              // お気に入りボタン
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await _addToFavorites(context, toiletId);
+                },
+                icon: const Icon(Icons.favorite, color: Colors.red),
+                label: const Text('お気に入り'),
+              ),
+            ],),
+            // 閉じるボタン
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('閉じる'),
-            ),
-            ElevatedButton.icon(
-              onPressed: () async {
-                await _addToFavorites(context, toiletId);
-              },
-              icon: const Icon(Icons.favorite, color: Colors.red),
-              label: const Text('お気に入りに追加'),
             ),
           ],
         );
       },
     );
+  }
+
+  static Future<void> _sendThanks(
+    BuildContext context,
+    String toiletId,
+    Map<String, dynamic> data,
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("ログインが必要です")),
+      );
+      return;
+    }
+
+    try {
+      final String? toUserId = data['registeredBy'];
+      if (toUserId == null) {
+        print("⚠️ 投稿者IDが見つかりません");
+        return;
+      }
+
+      // 自分自身に送ろうとした場合の処理
+      if (toUserId == user.uid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("あなた自身の投稿です")),
+        );
+        return;
+      }
+
+      // Firestore に「ありがとう」通知を追加
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'toUserId': toUserId,
+        'fromUserId': user.uid,
+        'message': 'ありがとうボタンが押されました！',
+        'createdAt': FieldValue.serverTimestamp(),
+        'toiletId': toiletId,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("「ありがとう」を送信しました")),
+      );
+    } catch (e) {
+      print("🔥 ありがとう送信エラー: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("エラーが発生しました")),
+      );
+    }
   }
 
   static Future<void> _addToFavorites(BuildContext context, String toiletId) async {

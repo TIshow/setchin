@@ -136,35 +136,60 @@ class AuthService {
 
   // ユーザーのお気にいいりしたデータを取得
   Future<List<Map<String, dynamic>>> getUserFavorites(String userId) async {
-  try {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection('favorites')
-        .where('userId', isEqualTo: userId)
-        .get();
-
-    List<Map<String, dynamic>> favorites = [];
-
-    for (var doc in querySnapshot.docs) {
-      String toiletId = doc['toiletId'];
-
-      // トイレの詳細を取得
-      DocumentSnapshot toiletDoc = await FirebaseFirestore.instance
-          .collection('toilets')
-          .doc(toiletId)
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('favorites')
+          .where('userId', isEqualTo: userId)
           .get();
 
-      if (toiletDoc.exists) {
-        favorites.add({
-          "name": toiletDoc["buildingName"] ?? "名称不明",
-          "location": "${toiletDoc["location"].latitude}, ${toiletDoc["location"].longitude}",
-          "rating": toiletDoc["rating"] ?? 0,
-        });
+      List<Map<String, dynamic>> favorites = [];
+
+      for (var doc in querySnapshot.docs) {
+        String toiletId = doc['toiletId'];
+
+        // トイレの詳細を取得
+        DocumentSnapshot toiletDoc = await FirebaseFirestore.instance
+            .collection('toilets')
+            .doc(toiletId)
+            .get();
+
+        if (toiletDoc.exists) {
+          favorites.add({
+            "name": toiletDoc["buildingName"] ?? "名称不明",
+            "location": "${toiletDoc["location"].latitude}, ${toiletDoc["location"].longitude}",
+            "rating": toiletDoc["rating"] ?? 0,
+          });
+        }
       }
+
+      return favorites;
+    } catch (e) {
+      return [];
+    }
+  }
+  
+  // ありがとうを送信
+  Future<void> sendThanks({
+    required String toUserId,  // 通知を受け取るユーザーID (投稿者)
+    required String toiletId,  // トイレID (どの投稿に対して「ありがとう」か?)
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception("ログインしていません");
     }
 
-    return favorites;
-  } catch (e) {
-    return [];
+    // もし自分自身の投稿に「ありがとう」を送るなら、スキップする処理を入れる
+    if (toUserId == user.uid) {
+      throw Exception("自分の投稿には送信できません");
+    }
+
+    // Firestore に notifications コレクションを用意して、そこに書き込む
+    await _firestore.collection('notifications').add({
+      'toUserId': toUserId,         // 通知先ユーザー
+      'fromUserId': user.uid,       // 通知を送ったユーザー
+      'toiletId': toiletId,         // トイレID
+      'message': 'ありがとうボタンが押されました！',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
-}
 }
