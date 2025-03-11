@@ -97,7 +97,6 @@ class AuthService {
       return "未設定"; // デフォルト値を返す
     }
   } catch (e) {
-    print("Firestore ユーザー名取得エラー: $e");
     return "エラー"; // エラー時もループしないように
   }
 }
@@ -108,4 +107,64 @@ class AuthService {
       'username': newUsername,
     });
   }
+
+  // 投稿したトイレ一覧を取得
+  Future<List<Map<String, dynamic>>> getUserToilets(String userId) async {
+    try {
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('toilets')
+          .where('registeredBy', isEqualTo: userId)
+          .orderBy('createdAt', descending: true) // 新しい順にソート
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return [];
+      }
+
+      return querySnapshot.docs.map((doc) {
+        return {
+          "name": doc["buildingName"] ?? "名称不明",
+          "location": "${doc["location"].latitude}, ${doc["location"].longitude}",
+          "rating": doc["rating"] ?? 0,
+          "createdAt": doc["createdAt"]?.toDate().toString() ?? "不明",
+        };
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ユーザーのお気にいいりしたデータを取得
+  Future<List<Map<String, dynamic>>> getUserFavorites(String userId) async {
+  try {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('favorites')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    List<Map<String, dynamic>> favorites = [];
+
+    for (var doc in querySnapshot.docs) {
+      String toiletId = doc['toiletId'];
+
+      // トイレの詳細を取得
+      DocumentSnapshot toiletDoc = await FirebaseFirestore.instance
+          .collection('toilets')
+          .doc(toiletId)
+          .get();
+
+      if (toiletDoc.exists) {
+        favorites.add({
+          "name": toiletDoc["buildingName"] ?? "名称不明",
+          "location": "${toiletDoc["location"].latitude}, ${toiletDoc["location"].longitude}",
+          "rating": toiletDoc["rating"] ?? 0,
+        });
+      }
+    }
+
+    return favorites;
+  } catch (e) {
+    return [];
+  }
+}
 }
