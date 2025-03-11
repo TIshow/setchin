@@ -97,7 +97,6 @@ class AuthService {
       return "未設定"; // デフォルト値を返す
     }
   } catch (e) {
-    print("Firestore ユーザー名取得エラー: $e");
     return "エラー"; // エラー時もループしないように
   }
 }
@@ -112,8 +111,6 @@ class AuthService {
   // 投稿したトイレ一覧を取得
   Future<List<Map<String, dynamic>>> getUserToilets(String userId) async {
     try {
-      print("📡 Firestore からユーザーの投稿を取得: userId = $userId");
-
       QuerySnapshot querySnapshot = await _firestore
           .collection('toilets')
           .where('registeredBy', isEqualTo: userId)
@@ -121,14 +118,10 @@ class AuthService {
           .get();
 
       if (querySnapshot.docs.isEmpty) {
-        print("⚠️ 投稿が見つかりませんでした");
         return [];
       }
 
-      print("✅ Firestore から投稿を取得: ${querySnapshot.docs.length} 件");
-
       return querySnapshot.docs.map((doc) {
-        print("📝 取得したデータ: ${doc.data()}");
         return {
           "name": doc["buildingName"] ?? "名称不明",
           "location": "${doc["location"].latitude}, ${doc["location"].longitude}",
@@ -137,7 +130,6 @@ class AuthService {
         };
       }).toList();
     } catch (e) {
-      print("🔥 投稿一覧取得エラー: $e");
       return [];
     }
   }
@@ -172,7 +164,6 @@ class AuthService {
 
     return favorites;
   } catch (e) {
-    print("🔥 お気に入り取得エラー: $e");
     return [];
   }
 }
