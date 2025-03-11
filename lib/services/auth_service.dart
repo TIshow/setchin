@@ -192,4 +192,25 @@ class AuthService {
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
+
+  // ありがとうの通知取得
+  Stream<List<Map<String, dynamic>>> watchUserNotifications(String userId) {
+    return _firestore
+        .collection('notifications')
+        .where('toUserId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((querySnapshot) {
+          return querySnapshot.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return {
+              'id': doc.id,
+              'fromUserId': data['fromUserId'] ?? '',
+              'message': data['message'] ?? '',
+              'createdAt': data['createdAt'],
+              'toiletId': data['toiletId'] ?? '',
+            };
+          }).toList();
+        });
+  }
 }
