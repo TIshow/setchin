@@ -35,14 +35,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      print("👤 ユーザーID: ${user.uid}");
 
       String? username = await _authService.getUsername(user.uid);
       List<Map<String, dynamic>> toilets = await _authService.getUserToilets(user.uid);
       List<Map<String, dynamic>> favorites = await _authService.getUserFavorites(user.uid); // お気に入り取得
-
-      print("📝 投稿データ取得結果: ${toilets.length} 件");
-      print("⭐ お気に入り取得結果: ${favorites.length} 件");
 
       setState(() {
         _username = username ?? "未設定";
