@@ -137,12 +137,11 @@ class AuthService {
       }
     }
   }
-}
 
-  // 投稿したトイレ一覧を取得
+// 投稿したトイレ一覧を取得
   Future<List<Map<String, dynamic>>> getUserToilets(String userId) async {
     try {
-      QuerySnapshot querySnapshot = await _firestore
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('toilets')
           .where('registeredBy', isEqualTo: userId)
           .orderBy('createdAt', descending: true) // 新しい順にソート
@@ -155,7 +154,8 @@ class AuthService {
       return querySnapshot.docs.map((doc) {
         return {
           "name": doc["buildingName"] ?? "名称不明",
-          "location": "${doc["location"].latitude}, ${doc["location"].longitude}",
+          "location":
+              "${doc["location"].latitude}, ${doc["location"].longitude}",
           "rating": doc["rating"] ?? 0,
           "createdAt": doc["createdAt"]?.toDate().toString() ?? "不明",
         };
@@ -165,38 +165,36 @@ class AuthService {
     }
   }
 
-  // ユーザーのお気にいいりしたデータを取得
+// ユーザーのお気にいいりしたデータを取得
   Future<List<Map<String, dynamic>>> getUserFavorites(String userId) async {
-  try {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection('favorites')
-        .where('userId', isEqualTo: userId)
-        .get();
-
-    List<Map<String, dynamic>> favorites = [];
-
-    for (var doc in querySnapshot.docs) {
-      String toiletId = doc['toiletId'];
-
-      // トイレの詳細を取得
-      DocumentSnapshot toiletDoc = await FirebaseFirestore.instance
-          .collection('toilets')
-          .doc(toiletId)
+    try {
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('favorites')
+          .where('userId', isEqualTo: userId)
           .get();
 
-      if (toiletDoc.exists) {
-        favorites.add({
-          "name": toiletDoc["buildingName"] ?? "名称不明",
-          "location": "${toiletDoc["location"].latitude}, ${toiletDoc["location"].longitude}",
-          "rating": toiletDoc["rating"] ?? 0,
-        });
-      }
-    }
+      List<Map<String, dynamic>> favorites = [];
 
-    return favorites;
-  } catch (e) {
-    return [];
+      for (var doc in querySnapshot.docs) {
+        String toiletId = doc['toiletId'];
+
+        // トイレの詳細を取得
+        DocumentSnapshot toiletDoc =
+            await _firestore.collection('toilets').doc(toiletId).get();
+
+        if (toiletDoc.exists) {
+          favorites.add({
+            "name": toiletDoc["buildingName"] ?? "名称不明",
+            "location":
+                "${toiletDoc["location"].latitude}, ${toiletDoc["location"].longitude}",
+            "rating": toiletDoc["rating"] ?? 0,
+          });
+        }
+      }
+
+      return favorites;
+    } catch (e) {
+      return [];
+    }
   }
 }
-}
-
