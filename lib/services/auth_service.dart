@@ -30,12 +30,12 @@ class AuthService {
   // 4) メールアドレスで新規登録
   Future<User?> signUpWithEmail(String email, String password) async {
     try {
-      UserCredential userCredential = 
-        await _auth.createUserWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
-      return userCredential.user; 
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return userCredential.user;
       // userCredential.user は User? を返す
     } catch (e) {
       // 失敗時は例外を投げる
@@ -54,7 +54,7 @@ class AuthService {
       }
 
       // Google 認証情報を取得
-      final GoogleSignInAuthentication googleAuth = 
+      final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
       // Firebase Auth 用の Credential に変換
@@ -89,23 +89,112 @@ class AuthService {
 
   // Firestore からユーザーネームを取得
   Future<String?> getUsername(String userId) async {
-  try {
-    DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
-    if (userDoc.exists && userDoc.data() != null) {
-      return userDoc.get('username') ?? "未設定";
-    } else {
-      return "未設定"; // デフォルト値を返す
+    try {
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists && userDoc.data() != null) {
+        return userDoc.get('username') ?? "未設定";
+      } else {
+        return "未設定"; // デフォルト値を返す
+      }
+    } catch (e) {
+      print("Firestore ユーザー名取得エラー: $e");
+      return "エラー"; // エラー時もループしないように
     }
-  } catch (e) {
-    print("Firestore ユーザー名取得エラー: $e");
-    return "エラー"; // エラー時もループしないように
   }
-}
-  
+
   // ユーザー名を更新
   Future<void> updateUsername(String userId, String newUsername) async {
     await _firestore.collection('users').doc(userId).update({
       'username': newUsername,
     });
+  }
+
+  // メールアドレスとパスワードを更新
+  Future<String?> updateEmailAndPassword(String email, String password) async {
+    try {
+      User? user = _auth.currentUser;
+
+      if (user == null) {
+        return 'ユーザーが見つかりません。ログインし直してください。';
+      }
+
+      // メールアドレスの更新
+      await user.verifyBeforeUpdateEmail(email);
+      await user.sendEmailVerification(); // 確認メールを送信
+
+      // パスワードの更新
+      await user.updatePassword(password);
+
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        return 'セキュリティのため、もう一度ログインしてください。';
+      } else if (e.code == 'email-already-in-use') {
+        return 'このメールアドレスはすでに使用されています。';
+      } else {
+        return 'エラーが発生しました: ${e.message}';
+      }
+    }
+  }
+
+// 投稿したトイレ一覧を取得
+  Future<List<Map<String, dynamic>>> getUserToilets(String userId) async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('toilets')
+          .where('registeredBy', isEqualTo: userId)
+          .orderBy('createdAt', descending: true) // 新しい順にソート
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return [];
+      }
+
+      return querySnapshot.docs.map((doc) {
+        return {
+          "name": doc["buildingName"] ?? "名称不明",
+          "location":
+              "${doc["location"].latitude}, ${doc["location"].longitude}",
+          "rating": doc["rating"] ?? 0,
+          "createdAt": doc["createdAt"]?.toDate().toString() ?? "不明",
+        };
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+// ユーザーのお気にいいりしたデータを取得
+  Future<List<Map<String, dynamic>>> getUserFavorites(String userId) async {
+    try {
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('favorites')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      List<Map<String, dynamic>> favorites = [];
+
+      for (var doc in querySnapshot.docs) {
+        String toiletId = doc['toiletId'];
+
+        // トイレの詳細を取得
+        DocumentSnapshot toiletDoc =
+            await _firestore.collection('toilets').doc(toiletId).get();
+
+        if (toiletDoc.exists) {
+          favorites.add({
+            "name": toiletDoc["buildingName"] ?? "名称不明",
+            "location":
+                "${toiletDoc["location"].latitude}, ${toiletDoc["location"].longitude}",
+            "rating": toiletDoc["rating"] ?? 0,
+          });
+        }
+      }
+
+      return favorites;
+    } catch (e) {
+      return [];
+    }
   }
 }
