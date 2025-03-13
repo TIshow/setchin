@@ -73,7 +73,9 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
   void _submitForm() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print('エラー: ユーザーがログインしていません');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("ログインが必要です")),
+      );
       return;
     }
 
@@ -145,24 +147,24 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
 
   // フォームをクリアする
 
-void _clearForm() {
-  setState(() {
-    _locationController.clear();
-    _buildingNameController.clear();
-    _latitude = null;
-    _longitude = null;
-    _rating = 0;
-    _female = false;
-    _male = false;
-    _multipurpose = false;
-    _other = false;
-    _washlet = false;
-    _ostomate = false;
-    _diaperChange = false;
-    _babyChair = false;
-    _wheelchair = false;
-  });
-}
+  void _clearForm() {
+    setState(() {
+      _locationController.clear();
+      _buildingNameController.clear();
+      _latitude = null;
+      _longitude = null;
+      _rating = 0;
+      _female = false;
+      _male = false;
+      _multipurpose = false;
+      _other = false;
+      _washlet = false;
+      _ostomate = false;
+      _diaperChange = false;
+      _babyChair = false;
+      _wheelchair = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
