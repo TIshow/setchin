@@ -141,7 +141,7 @@ class AuthService {
   // 投稿したトイレ一覧を取得
   Future<List<Map<String, dynamic>>> getUserToilets(String userId) async {
     try {
-      QuerySnapshot querySnapshot = await _firestore
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('toilets')
           .where('registeredBy', isEqualTo: userId)
           .orderBy('createdAt', descending: true) // 新しい順にソート
@@ -154,7 +154,8 @@ class AuthService {
       return querySnapshot.docs.map((doc) {
         return {
           "name": doc["buildingName"] ?? "名称不明",
-          "location": "${doc["location"].latitude}, ${doc["location"].longitude}",
+          "location":
+              "${doc["location"].latitude}, ${doc["location"].longitude}",
           "rating": doc["rating"] ?? 0,
           "createdAt": doc["createdAt"]?.toDate().toString() ?? "不明",
         };
@@ -164,7 +165,7 @@ class AuthService {
     }
   }
 
-  // ユーザーのお気にいいりしたデータを取得
+// ユーザーのお気にいいりしたデータを取得
   Future<List<Map<String, dynamic>>> getUserFavorites(String userId) async {
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
