@@ -35,6 +35,7 @@ class FirebaseService {
       final int rating = data['rating'] ?? 0;
       final Map<String, dynamic> type = data['type'] ?? {};
       final Map<String, dynamic> facilities = data['facilities'] ?? {};
+      final Map<String, dynamic> registeredBy = data['registeredBy'] ?? {};
 
       final toiletData = {
         "id": doc.id,
@@ -43,7 +44,7 @@ class FirebaseService {
         "rating": rating,
         "type": type,
         "facilities": facilities,
-        "registeredBy": data["registeredBy"],
+        "registeredBy": registeredBy,
       };
 
       toilets.add(toiletData);
