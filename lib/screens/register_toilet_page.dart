@@ -74,7 +74,9 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
   void _submitForm() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print('エラー: ユーザーがログインしていません');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("ログインが必要です")),
+      );
       return;
     }
 
@@ -144,6 +146,7 @@ class _RegisterToiletPageState extends State<RegisterToiletPage> {
     );
   }
 
+  // フォームをクリアする
   void _clearForm() {
     setState(() {
       _locationController.clear();
