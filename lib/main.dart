@@ -13,8 +13,16 @@ import 'utils/web_utils.dart'
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // LOCALでのみ実行🔥 DEPLOY時はコメントアウト
-  // await dotenv.load(fileName: ".env");
+  // LOCAL（web）でのみ実行🔥
+  // Web でのみ dotenv をロード
+  // DEPLOY時はコメントアウト
+  if (kIsWeb) {
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      print("⚠️ .env ファイルの読み込みに失敗しました (Web): $e");
+    }
+  }
 
   // Firebaseの初期化
   try {
