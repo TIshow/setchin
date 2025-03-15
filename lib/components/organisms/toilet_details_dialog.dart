@@ -4,7 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/format_utils.dart';
 
 class ToiletDetailsDialog {
-  static void show(BuildContext context, Map<String, dynamic> data, String toiletId) {
+  static void show(
+      BuildContext context, Map<String, dynamic> data, String toiletId) {
     final String name = data['name'] ?? '名前未設定';
     final String rating = data['rating']?.toString() ?? '情報なし';
     final GeoPoint? location = data['location'] as GeoPoint?;
@@ -28,25 +29,27 @@ class ToiletDetailsDialog {
             ],
           ),
           actions: [
-            Row(children: [
-              // ありがとうボタン
-              ElevatedButton.icon(
-                icon: const Icon(Icons.thumb_up),
-                label: const Text('ありがとう'),
-                onPressed: () async {
-                  await _sendThanks(context, toiletId, data);
-                },
-              ),
-              const SizedBox(width: 10),
-              // お気に入りボタン
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await _addToFavorites(context, toiletId);
-                },
-                icon: const Icon(Icons.favorite, color: Colors.red),
-                label: const Text('お気に入り'),
-              ),
-            ],),
+            Row(
+              children: [
+                // ありがとうボタン
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.thumb_up),
+                  label: const Text('ありがとう'),
+                  onPressed: () async {
+                    await _sendThanks(context, toiletId, data);
+                  },
+                ),
+                const SizedBox(width: 10),
+                // お気に入りボタン
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await _addToFavorites(context, toiletId);
+                  },
+                  icon: const Icon(Icons.favorite, color: Colors.red),
+                  label: const Text('お気に入り'),
+                ),
+              ],
+            ),
             // 閉じるボタン
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -90,7 +93,7 @@ class ToiletDetailsDialog {
       await FirebaseFirestore.instance.collection('notifications').add({
         'toUserId': toUserId,
         'fromUserId': user.uid,
-        'message': '！',
+        'message': 'ありがとう！',
         'createdAt': FieldValue.serverTimestamp(),
         'toiletId': toiletId,
       });
@@ -106,7 +109,8 @@ class ToiletDetailsDialog {
     }
   }
 
-  static Future<void> _addToFavorites(BuildContext context, String toiletId) async {
+  static Future<void> _addToFavorites(
+      BuildContext context, String toiletId) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -117,7 +121,7 @@ class ToiletDetailsDialog {
 
     try {
       final favoritesRef = FirebaseFirestore.instance.collection('favorites');
-      
+
       // 既にお気に入りに登録されているか確認
       final querySnapshot = await favoritesRef
           .where('userId', isEqualTo: user.uid)
